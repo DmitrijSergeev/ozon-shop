@@ -1,17 +1,18 @@
 import express from "express";
-import { prisma } from "./lib/prisma.js";
+import productRoutes from "./routes/product.routes.js";
+import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
-app.get("/", async (_, res) => {
-  const count = await prisma.product.count();
+app.use(express.json());
 
-  res.json({
-    message: "Backend works!",
-    products: count,
-  });
-});
+app.use("/api/products", productRoutes);
+
+app.use("/api/products", productRoutes);
+
+// ⬇️ Всегда подключается ПОСЛЕ маршрутов
+app.use(errorMiddleware);
 
 app.listen(3000, () => {
-  console.log("🚀 Server started: http://localhost:3000");
+  console.log("🚀 Server started on http://localhost:3000");
 });
