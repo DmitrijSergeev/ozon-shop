@@ -1,17 +1,13 @@
 import express from "express";
-import productRoutes from "./routes/product.routes.js";
-import { errorMiddleware } from "./middleware/error.middleware.js";
+import cors from "cors";
+import ozonRouter from "./routes/ozon.routes.js";
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
-app.use("/api/products", productRoutes);
-
-app.use("/api/products", productRoutes);
-
-// ⬇️ Всегда подключается ПОСЛЕ маршрутов
-app.use(errorMiddleware);
+app.use("/api/ozon", ozonRouter);
 
 app.listen(3000, () => {
   console.log("🚀 Server started on http://localhost:3000");

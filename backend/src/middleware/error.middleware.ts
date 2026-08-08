@@ -6,19 +6,16 @@ export const errorMiddleware: ErrorRequestHandler = (
   err,
   _req,
   res,
-  _next
+  _next,
 ) => {
-  console.error(err);
+  console.error("❌ ERROR:", err);
 
   if (err instanceof ZodError) {
-  return res.status(400).json({
-    message: "Validation failed",
-    errors: err.issues.map((issue) => ({
-      field: issue.path.join("."),
-      message: issue.message,
-    })),
-  });
-}
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: err.issues,
+    });
+  }
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
