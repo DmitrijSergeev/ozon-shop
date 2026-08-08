@@ -1,0 +1,21 @@
+{
+  "name": "ozon-shop",
+  "version": "1.0.0",
+  "description": "Full Stack интернет-магазин с интеграцией Ozon Seller API.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
