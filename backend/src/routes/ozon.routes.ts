@@ -1,8 +1,26 @@
 import { Router } from "express";
-import { getOzonProductsHandler } from "../controllers/ozon.controller.js";
+
+import {
+    getOzonProductsHandler,
+    getOzonProductHandler,
+} from "../controllers/ozon.controller.js";
 
 const router = Router();
 
-router.get("/products", getOzonProductsHandler);
+
+// Список товаров
+// GET /api/ozon/products
+router.get(
+    "/products",
+    getOzonProductsHandler
+);
+
+
+// Один товар 3056876257
+// GET /api/ozon/products/:productId
+router.get(
+    "/products/:productId",
+    getOzonProductHandler
+);
 
 export default router;

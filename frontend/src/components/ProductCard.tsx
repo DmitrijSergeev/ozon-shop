@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import type { OzonProduct } from "../api/ozonApi";
 
 interface ProductCardProps {
@@ -5,9 +7,19 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product }: ProductCardProps) {
+    const navigate = useNavigate();
+
+    function handleClick() {
+        navigate(`/products/${product.product_id}`);
+    }
+
     return (
-        <article className="product-card">
-            <h2>{product.offer_id}</h2>
+        <article
+            className="product-card"
+            onClick={handleClick}
+            style={{ cursor: "pointer" }}
+        >
+            <h3>{product.offer_id}</h3>
 
             <p>
                 <strong>Product ID:</strong>{" "}
@@ -20,24 +32,20 @@ function ProductCard({ product }: ProductCardProps) {
             </p>
 
             <p>
-                <strong>FBO:</strong>{" "}
-                {product.has_fbo_stocks ? "Есть" : "Нет"}
+                FBO: {product.has_fbo_stocks ? "Да" : "Нет"}
             </p>
 
             <p>
-                <strong>FBS:</strong>{" "}
-                {product.has_fbs_stocks ? "Есть" : "Нет"}
+                FBS: {product.has_fbs_stocks ? "Да" : "Нет"}
             </p>
 
-            <p>
-                <strong>Архивный:</strong>{" "}
-                {product.archived ? "Да" : "Нет"}
-            </p>
+            {product.archived && (
+                <p>📦 Архивный товар</p>
+            )}
 
-            <p>
-                <strong>Скидка:</strong>{" "}
-                {product.is_discounted ? "Да" : "Нет"}
-            </p>
+            {product.is_discounted && (
+                <p>🏷️ Есть скидка</p>
+            )}
         </article>
     );
 }
