@@ -12,16 +12,20 @@ export const ozonApi = axios.create({
     },
 });
 
+type SearchType = "offer_id" | "product_id" | "sku";
+
 interface GetProductsParams {
     lastId?: string;
     limit?: number;
     search?: string;
+    searchType?: SearchType;
 }
 
 export async function getOzonProducts({
                                           lastId = "",
                                           limit = 20,
                                           search = "",
+                                          searchType = "offer_id",
                                       }: GetProductsParams = {}) {
     console.log("➡️ Запрос списка товаров Ozon");
 
@@ -36,32 +40,32 @@ export async function getOzonProducts({
         visibility: "ALL",
     };
 
-    /*
-     * Поиск по offer_id, product_id или sku.
-     *
-     * Ozon позволяет передавать только один тип
-     * идентификатора за один запрос.
-     */
-
     if (value) {
-        // Если введено число
-        if (/^\d+$/.test(value)) {
-            const id = Number(value);
-
-            /*
-             * Здесь есть неоднозначность:
-             * число может быть product_id или sku.
-             *
-             * Поэтому сначала ищем по product_id.
-             * Если понадобится поиск именно по SKU,
-             * фронтенд будет передавать отдельный тип поиска.
-             */
-            filter.product_id = [id];
-        } else {
-            // Строка — ищем по offer_id
+        if (searchType === "offer_id") {
             filter.offer_id = [value];
         }
+
+        if (searchType === "product_id") {
+            if (!/^\d+$/.test(value)) {
+                throw new Error("product_id должен содержать только цифры");
+            }
+
+            filter.product_id = [Number(value)];
+        }
+
+        if (searchType === "sku") {
+            if (!/^\d+$/.test(value)) {
+                throw new Error("SKU должен содержать только цифры");
+            }
+
+            filter.skus = [Number(value)];
+        }
     }
+
+    console.log("🔎 Search:", value);
+    console.log("🔎 Search type:", searchType);
+    console.log("📄 Last ID:", lastId);
+    console.log("📦 Limit:", limit);
 
     const response = await ozonApi.post("/v3/product/list", {
         filter,

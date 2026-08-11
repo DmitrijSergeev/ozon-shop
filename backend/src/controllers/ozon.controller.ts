@@ -14,7 +14,12 @@ export async function getOzonProductsHandler(
     const lastId = String(req.query.last_id || "");
     const search = String(req.query.search || "");
 
+    const searchType = String(
+        req.query.searchType || "offer_id"
+    ) as "offer_id" | "product_id" | "sku";
+
     console.log("🔎 Search:", search);
+    console.log("🔎 Search type:", searchType);
     console.log("📄 Last ID:", lastId);
     console.log("📦 Limit:", limit);
 
@@ -22,6 +27,7 @@ export async function getOzonProductsHandler(
       lastId,
       limit,
       search,
+      searchType,
     });
 
     res.json(products);
@@ -36,4 +42,3 @@ export async function getOzonProductsHandler(
     });
   }
 }
-//MF3030-BLACK-10  3018083923
