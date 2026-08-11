@@ -56,3 +56,14 @@ export async function getOzonProducts({
 
   return response.json();
 }
+export async function getOzonProduct(productId: number) {
+  const response = await fetch(
+      `http://localhost:3000/api/ozon/products/${productId}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Не удалось загрузить товар");
+  }
+
+  return response.json();
+}
