@@ -14,7 +14,7 @@ export interface OzonProduct {
   sku: number;
 }
 
-interface OzonProductsResponse {
+export interface OzonProductsResponse {
   result: {
     items: OzonProduct[];
     total: number;
@@ -56,4 +56,3 @@ export async function getOzonProducts({
 
   return response.json();
 }
-// 3076676743
