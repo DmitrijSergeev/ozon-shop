@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import ProductCard from "./ProductCard";
 import ProductSearch from "./ProductSearch";
+import ProductCard from "./ProductCard";
 
 import {
   getOzonProducts,
@@ -10,8 +11,9 @@ import {
 } from "../api/ozonApi";
 
 function ProductList() {
-  const [products, setProducts] = useState<OzonProduct[]>([]);
+  const navigate = useNavigate();
 
+  const [products, setProducts] = useState<OzonProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -24,60 +26,76 @@ function ProductList() {
   const [archivedOnly, setArchivedOnly] = useState(false);
   const [discountedOnly, setDiscountedOnly] = useState(false);
 
-  // Текущая страница
+  /*
+   * Курсоры страниц.
+   *
+   * pageCursors[0] = курсор первой страницы
+   * pageCursors[1] = курсор второй страницы
+   * pageCursors[2] = курсор третьей страницы
+   *
+   * Для первой страницы всегда используется "".
+   */
+  const [pageCursors, setPageCursors] =
+      useState<string[]>([""]);
+
   const [page, setPage] = useState(1);
 
-  // last_id для каждой страницы
-  const [pageTokens, setPageTokens] = useState<string[]>([""]);
-
-  // Есть ли следующая страница
-  const [hasNextPage, setHasNextPage] =
-      useState(false);
-
+  /*
+   * Загружает страницу товаров.
+   */
   async function loadProducts(
+      cursor: string,
       currentSearch = search,
       currentSearchType = searchType,
-      currentPage = page
+      currentFbo = fboOnly,
+      currentFbs = fbsOnly,
+      currentArchived = archivedOnly,
+      currentDiscounted = discountedOnly,
   ) {
     try {
       setLoading(true);
       setError("");
 
-      const lastId =
-          pageTokens[currentPage - 1] || "";
-
       const data = await getOzonProducts({
         search: currentSearch,
         searchType: currentSearchType,
-        lastId,
+        lastId: cursor,
+        limit: 20,
+
+        fbo: currentFbo,
+        fbs: currentFbs,
+        archived: currentArchived,
+        discounted: currentDiscounted,
       });
 
       setProducts(data.result.items);
 
-      const nextLastId = data.result.last_id;
+      /*
+       * last_id, который вернул Ozon,
+       * понадобится для следующей страницы.
+       */
+      const nextCursor = data.result.last_id || "";
 
-      setHasNextPage(
-          Boolean(nextLastId) &&
-          data.result.items.length > 0
-      );
+      setPageCursors((current) => {
+        const updated = [...current];
 
-      // Сохраняем last_id для следующей страницы
-      if (nextLastId) {
-        setPageTokens((currentTokens) => {
-          const newTokens = [...currentTokens];
+        /*
+         * Курсор для следующей страницы.
+         *
+         * Например:
+         *
+         * page 1 -> nextCursor = cursor2
+         * page 2 -> nextCursor = cursor3
+         */
+        updated[page] = nextCursor;
 
-          newTokens[currentPage] =
-              nextLastId;
-
-          return newTokens;
-        });
-      }
+        return updated;
+      });
     } catch (err) {
       console.error(err);
 
-      setError("Не удалось загрузить товары");
       setProducts([]);
-      setHasNextPage(false);
+      setError("Не удалось загрузить товары");
     } finally {
       setLoading(false);
     }
@@ -85,84 +103,117 @@ function ProductList() {
 
   /*
    * Первоначальная загрузка.
-   *
-   * Здесь специально не вызываем setState
-   * непосредственно внутри useEffect.
    */
   useEffect(() => {
     let ignore = false;
 
-    async function fetchOnMount() {
+    async function initialLoad() {
       try {
         const data = await getOzonProducts({
           search: "",
           searchType: "offer_id",
           lastId: "",
+          limit: 20,
         });
 
         if (!ignore) {
           setProducts(data.result.items);
 
-          const nextLastId =
-              data.result.last_id;
+          const nextCursor =
+              data.result.last_id || "";
 
-          setHasNextPage(
-              Boolean(nextLastId) &&
-              data.result.items.length > 0
-          );
+          setPageCursors([
+            "",
+            nextCursor,
+          ]);
 
-          if (nextLastId) {
-            setPageTokens([ "", nextLastId ]);
-          }
+          setPage(1);
+          setLoading(false);
         }
       } catch (err) {
         console.error(err);
 
         if (!ignore) {
-          setError(
-              "Не удалось загрузить товары"
-          );
-
           setProducts([]);
-          setHasNextPage(false);
-        }
-      } finally {
-        if (!ignore) {
+          setError(
+              "Не удалось загрузить товары",
+          );
           setLoading(false);
         }
       }
     }
 
-    fetchOnMount();
+    initialLoad();
 
     return () => {
       ignore = true;
     };
   }, []);
 
+  /*
+   * Поиск.
+   *
+   * При новом поиске начинаем пагинацию заново.
+   */
   function handleSearch(
       newSearch: string,
-      newSearchType: SearchType
+      newSearchType: SearchType,
   ) {
     setSearch(newSearch);
     setSearchType(newSearchType);
 
-    // При новом поиске начинаем с первой страницы
     setPage(1);
-
-    setPageTokens([""]);
-
-    setHasNextPage(false);
+    setPageCursors([""]);
 
     loadProducts(
+        "",
         newSearch,
         newSearchType,
-        1
+        fboOnly,
+        fbsOnly,
+        archivedOnly,
+        discountedOnly,
     );
   }
 
+  /*
+   * Применение фильтров.
+   *
+   * Сейчас сами фильтры мы уже подготовили.
+   * Если backend принимает их отдельно —
+   * подключим их к запросу следующим шагом.
+   */
+  function applyFilters() {
+    setPage(1);
+    setPageCursors([""]);
+
+    loadProducts(
+        "",
+        search,
+        searchType,
+        fboOnly,
+        fbsOnly,
+        archivedOnly,
+        discountedOnly,
+    );
+  }
+
+  /*
+   * Следующая страница.
+   */
   function handleNextPage() {
-    if (!hasNextPage || loading) {
+    if (loading) {
+      return;
+    }
+
+    const nextCursor =
+        pageCursors[page];
+
+    /*
+     * Если Ozon не дал last_id,
+     * следующей страницы нет.
+     */
+    if (!nextCursor) {
       return;
     }
 
@@ -171,180 +222,297 @@ function ProductList() {
     setPage(nextPage);
 
     loadProducts(
+        nextCursor,
         search,
         searchType,
-        nextPage
+        fboOnly,
+        fbsOnly,
+        archivedOnly,
+        discountedOnly,
     );
   }
 
+  /*
+   * Предыдущая страница.
+   */
   function handlePreviousPage() {
-    if (page === 1 || loading) {
+    if (loading || page <= 1) {
       return;
     }
 
     const previousPage = page - 1;
 
+    /*
+     * Для предыдущей страницы
+     * нужен курсор, с которого она была загружена.
+     *
+     * pageCursors:
+     *
+     * [0] = ""
+     * [1] = cursor для page 2
+     * [2] = cursor для page 3
+     */
+    const previousCursor =
+        pageCursors[previousPage - 1] || "";
+
     setPage(previousPage);
 
     loadProducts(
+        previousCursor,
         search,
         searchType,
-        previousPage
+        fboOnly,
+        fbsOnly,
+        archivedOnly,
+        discountedOnly,
     );
   }
 
-  const filteredProducts = products.filter(
-      (product) => {
-        if (
-            fboOnly &&
-            !product.has_fbo_stocks
-        ) {
-          return false;
-        }
+  function handleRowClick(
+      product: OzonProduct,
+  ) {
+    navigate(
+        `/products/${product.product_id}`,
+    );
+  }
 
-        if (
-            fbsOnly &&
-            !product.has_fbs_stocks
-        ) {
-          return false;
-        }
+  const hasNextPage =
+      Boolean(pageCursors[page]);
 
-        if (
-            archivedOnly &&
-            !product.archived
-        ) {
-          return false;
-        }
-
-        if (
-            discountedOnly &&
-            !product.is_discounted
-        ) {
-          return false;
-        }
-
-        return true;
-      }
-  );
+  const hasPreviousPage =
+      page > 1;
 
   return (
-      <section>
+      <section className="products-page">
+
         <ProductSearch
             onSearch={handleSearch}
         />
 
-        <div className="filters">
-          <label>
+        <div className="products-filters">
+
+          <label className="filter-checkbox">
             <input
                 type="checkbox"
                 checked={fboOnly}
                 onChange={(event) =>
                     setFboOnly(
-                        event.target.checked
+                        event.target.checked,
                     )
                 }
             />
-            Есть остатки FBO
+
+            <span>
+                        Есть остатки FBO
+                    </span>
           </label>
 
-          <label>
+          <label className="filter-checkbox">
             <input
                 type="checkbox"
                 checked={fbsOnly}
                 onChange={(event) =>
                     setFbsOnly(
-                        event.target.checked
+                        event.target.checked,
                     )
                 }
             />
-            Есть остатки FBS
+
+            <span>
+                        Есть остатки FBS
+                    </span>
           </label>
 
-          <label>
+          <label className="filter-checkbox">
             <input
                 type="checkbox"
                 checked={archivedOnly}
                 onChange={(event) =>
                     setArchivedOnly(
-                        event.target.checked
+                        event.target.checked,
                     )
                 }
             />
-            Архивные товары
+
+            <span>
+                        Архивные
+                    </span>
           </label>
 
-          <label>
+          <label className="filter-checkbox">
             <input
                 type="checkbox"
                 checked={discountedOnly}
                 onChange={(event) =>
                     setDiscountedOnly(
-                        event.target.checked
+                        event.target.checked,
                     )
                 }
             />
-            Со скидкой
+
+            <span>
+                        Со скидкой
+                    </span>
           </label>
+
+          <button
+              type="button"
+              className="filter-apply"
+              onClick={applyFilters}
+          >
+            Применить
+          </button>
         </div>
 
         {loading && (
-            <p>Загрузка товаров...</p>
+            <div className="products-state">
+              <div className="loader" />
+
+              <p>
+                Загрузка товаров...
+              </p>
+            </div>
         )}
 
         {!loading && error && (
-            <p>{error}</p>
+            <div className="products-state products-state-error">
+
+              <p>{error}</p>
+
+              <button
+                  type="button"
+                  onClick={() =>
+                      loadProducts(
+                          pageCursors[page - 1] || "",
+                          search,
+                          searchType,
+                          fboOnly,
+                          fbsOnly,
+                          archivedOnly,
+                          discountedOnly,
+                      )
+                  }
+              >
+                Повторить
+              </button>
+
+            </div>
         )}
 
         {!loading &&
             !error &&
-            filteredProducts.length === 0 && (
-                <p>Товары не найдены</p>
+            products.length === 0 && (
+                <div className="products-state">
+                  <p>
+                    Товары не найдены
+                  </p>
+                </div>
             )}
 
         {!loading &&
             !error &&
-            filteredProducts.length > 0 && (
+            products.length > 0 && (
                 <>
-                  <section className="product-list">
-                    {filteredProducts.map(
-                        (product) => (
-                            <ProductCard
-                                key={product.product_id}
-                                product={product}
-                            />
-                        )
-                    )}
-                  </section>
+                  <div className="products-table-wrapper">
 
-                  <div className="pagination">
+                    <table className="products-table">
+
+                      <thead>
+                      <tr>
+                        <th>
+                          Товар
+                        </th>
+
+                        <th>
+                          Offer ID
+                        </th>
+
+                        <th>
+                          Product ID
+                        </th>
+
+                        <th>
+                          SKU
+                        </th>
+
+                        <th>
+                          FBO
+                        </th>
+
+                        <th>
+                          FBS
+                        </th>
+
+                        <th>
+                          Статус
+                        </th>
+
+                        <th>
+                          Скидка
+                        </th>
+                      </tr>
+                      </thead>
+
+                      <tbody>
+                      {products.map(
+                          (product) => (
+                              <ProductCard
+                                  key={
+                                    product.product_id
+                                  }
+                                  product={
+                                    product
+                                  }
+                                  onClick={() =>
+                                      handleRowClick(
+                                          product,
+                                      )
+                                  }
+                              />
+                          ),
+                      )}
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                  <div className="products-pagination">
+
                     <button
+                        type="button"
+                        disabled={
+                            loading ||
+                            !hasPreviousPage
+                        }
                         onClick={
                           handlePreviousPage
-                        }
-                        disabled={
-                            page === 1 || loading
                         }
                     >
                       ← Назад
                     </button>
 
                     <span>
-                Страница {page}
-              </span>
+                                Страница {page}
+                            </span>
 
                     <button
+                        type="button"
+                        disabled={
+                            loading ||
+                            !hasNextPage
+                        }
                         onClick={
                           handleNextPage
-                        }
-                        disabled={
-                            !hasNextPage || loading
                         }
                     >
                       Вперёд →
                     </button>
+
                   </div>
                 </>
             )}
+
       </section>
   );
 }
