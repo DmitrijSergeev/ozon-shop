@@ -1,52 +1,95 @@
-import { useNavigate } from "react-router-dom";
-
 import type { OzonProduct } from "../api/ozonApi";
 
 interface ProductCardProps {
     product: OzonProduct;
+    onClick: () => void;
 }
 
-function ProductCard({ product }: ProductCardProps) {
-    const navigate = useNavigate();
-
-    function handleClick() {
-        navigate(`/products/${product.product_id}`);
-    }
-
+function ProductCard({
+                         product,
+                         onClick,
+                     }: ProductCardProps) {
     return (
-        <article
-            className="product-card"
-            onClick={handleClick}
-            style={{ cursor: "pointer" }}
+        <tr
+            className="product-row"
+            onClick={onClick}
         >
-            <h3>{product.offer_id}</h3>
+            <td className="product-name-cell">
+                <div className="product-name">
+                    Товар Ozon
+                </div>
 
-            <p>
-                <strong>Product ID:</strong>{" "}
+                <div className="product-id-mobile">
+                    ID: {product.product_id}
+                </div>
+            </td>
+
+            <td>
+                <span className="product-code">
+                    {product.offer_id}
+                </span>
+            </td>
+
+            <td>
                 {product.product_id}
-            </p>
+            </td>
 
-            <p>
-                <strong>SKU:</strong>{" "}
+            <td>
                 {product.sku}
-            </p>
+            </td>
 
-            <p>
-                FBO: {product.has_fbo_stocks ? "Да" : "Нет"}
-            </p>
+            <td>
+                <span
+                    className={
+                        product.has_fbo_stocks
+                            ? "stock stock-yes"
+                            : "stock stock-no"
+                    }
+                >
+                    {product.has_fbo_stocks
+                        ? "Есть"
+                        : "Нет"}
+                </span>
+            </td>
 
-            <p>
-                FBS: {product.has_fbs_stocks ? "Да" : "Нет"}
-            </p>
+            <td>
+                <span
+                    className={
+                        product.has_fbs_stocks
+                            ? "stock stock-yes"
+                            : "stock stock-no"
+                    }
+                >
+                    {product.has_fbs_stocks
+                        ? "Есть"
+                        : "Нет"}
+                </span>
+            </td>
 
-            {product.archived && (
-                <p>📦 Архивный товар</p>
-            )}
+            <td>
+                {product.archived ? (
+                    <span className="badge badge-archived">
+                        Архив
+                    </span>
+                ) : (
+                    <span className="badge badge-active">
+                        Активен
+                    </span>
+                )}
+            </td>
 
-            {product.is_discounted && (
-                <p>🏷️ Есть скидка</p>
-            )}
-        </article>
+            <td>
+                {product.is_discounted ? (
+                    <span className="badge badge-discount">
+                        Скидка
+                    </span>
+                ) : (
+                    <span className="badge badge-none">
+                        —
+                    </span>
+                )}
+            </td>
+        </tr>
     );
 }
 
