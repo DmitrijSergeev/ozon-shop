@@ -19,12 +19,15 @@ interface GetProductsParams {
     searchType?: "offer_id" | "product_id" | "sku";
 }
 
+/**
+ * Получение списка товаров Ozon
+ */
 export async function getOzonProducts({
-    lastId = "",
-    limit = 20,
-    search = "",
-    searchType = "offer_id",
-}: GetProductsParams = {}) {
+                                          lastId = "",
+                                          limit = 20,
+                                          search = "",
+                                          searchType = "offer_id",
+                                      }: GetProductsParams = {}) {
     console.log("➡️ Запрос списка товаров Ozon");
 
     const value = search.trim();
@@ -44,11 +47,19 @@ export async function getOzonProducts({
         }
 
         if (searchType === "product_id") {
-            filter.product_id = [Number(value)];
+            const id = Number(value);
+
+            if (!Number.isNaN(id)) {
+                filter.product_id = [id];
+            }
         }
 
         if (searchType === "sku") {
-            filter.skus = [Number(value)];
+            const sku = Number(value);
+
+            if (!Number.isNaN(sku)) {
+                filter.skus = [sku];
+            }
         }
     }
 
@@ -61,20 +72,21 @@ export async function getOzonProducts({
     return response.data;
 }
 
-
 /**
- * Получение подробной информации об одном товаре.
+ * Получение подробной информации о товаре
  *
- * Ozon позволяет искать товар по:
- * - product_id
- * - offer_id
- * - sku
+ * Ozon:
+ * POST /v3/product/info/list
+ *
+ * Передаём product_id массивом из одного элемента.
  */
-export async function getOzonProductById(productId: number) {
-    console.log("➡️ Запрос информации о товаре:", productId);
+export async function getOzonProductDetails(productId: number) {
+    console.log(
+        `➡️ Запрос подробной информации о товаре Ozon: ${productId}`,
+    );
 
     const response = await ozonApi.post("/v3/product/info/list", {
-        product_id: [String(productId)],
+        product_id: [productId],
     });
 
     return response.data;
