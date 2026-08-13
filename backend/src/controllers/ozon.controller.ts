@@ -10,93 +10,62 @@ import {
  * GET /api/ozon/products
  *
  * Получение списка товаров.
- *
- * Поддерживает:
- *
- * ?search=...
- * ?searchType=offer_id
- * ?searchType=product_id
- * ?searchType=sku
- *
- * ?last_id=...
- * ?limit=20
- *
- * ?fbo=true
- * ?fbs=true
- * ?archived=true
- * ?discounted=true
  */
 export async function getOzonProductsHandler(
     req: Request,
     res: Response,
 ) {
     try {
-        /*
-         * -------------------------------------------------------
-         * LIMIT
-         * -------------------------------------------------------
+        /**
+         * Количество товаров на странице.
+         *
+         * Мы разрешаем frontend передавать limit,
+         * но ограничиваем его диапазоном 1-100.
+         *
+         * Фактически frontend сейчас использует 20.
          */
+        const requestedLimit =
+            Number(req.query.limit) || 20;
 
         const limit = Math.min(
-            Math.max(
-                Number(req.query.limit) || 20,
-                1,
-            ),
+            Math.max(requestedLimit, 1),
             100,
         );
 
-        /*
-         * -------------------------------------------------------
-         * PAGINATION
-         * -------------------------------------------------------
+        /**
+         * Cursor Ozon.
          */
+        const lastId =
+            String(
+                req.query.last_id || "",
+            );
 
-        const lastId = String(
-            req.query.last_id || "",
-        );
-
-        /*
-         * -------------------------------------------------------
-         * SEARCH
-         * -------------------------------------------------------
+        /**
+         * Поисковая строка.
          */
+        const search =
+            String(
+                req.query.search || "",
+            );
 
-        const search = String(
-            req.query.search || "",
-        );
-
-        /*
-         * -------------------------------------------------------
-         * SEARCH TYPE
-         * -------------------------------------------------------
-         *
-         * Frontend сейчас отправляет:
-         *
-         * searchType
-         *
-         * Поэтому читаем именно его.
-         *
-         * Одновременно поддерживаем старый вариант:
-         *
-         * search_type
+        /**
+         * Тип поиска.
          */
-
-        const requestedSearchType =
-            req.query.searchType ||
-            req.query.search_type;
+        const rawSearchType =
+            String(
+                req.query.searchType || "",
+            );
 
         const searchType: SearchType =
-            requestedSearchType === "product_id" ||
-            requestedSearchType === "sku"
-                ? requestedSearchType
-                : "offer_id";
+            rawSearchType === "product_id"
+                ? "product_id"
+                : rawSearchType === "sku"
+                    ? "sku"
+                    : "offer_id";
 
-        /*
-         * -------------------------------------------------------
-         * FILTERS
-         * -------------------------------------------------------
+        /**
+         * Фильтры.
          */
-
         const fbo =
             req.query.fbo === "true";
 
@@ -108,12 +77,6 @@ export async function getOzonProductsHandler(
 
         const discounted =
             req.query.discounted === "true";
-
-        /*
-         * -------------------------------------------------------
-         * DEBUG
-         * -------------------------------------------------------
-         */
 
         console.log(
             "🔎 Search:",
@@ -136,12 +99,12 @@ export async function getOzonProductsHandler(
         );
 
         console.log(
-            "🔵 FBO:",
+            "📦 FBO:",
             fbo,
         );
 
         console.log(
-            "🟢 FBS:",
+            "📦 FBS:",
             fbs,
         );
 
@@ -151,15 +114,9 @@ export async function getOzonProductsHandler(
         );
 
         console.log(
-            "🏷️ Discounted:",
+            "📦 Discounted:",
             discounted,
         );
-
-        /*
-         * -------------------------------------------------------
-         * Ozon service
-         * -------------------------------------------------------
-         */
 
         const products =
             await getOzonProducts({
@@ -174,12 +131,6 @@ export async function getOzonProductsHandler(
                 discounted,
             });
 
-        /*
-         * -------------------------------------------------------
-         * RESPONSE
-         * -------------------------------------------------------
-         */
-
         res.json(products);
     } catch (error: any) {
         console.error(
@@ -187,13 +138,16 @@ export async function getOzonProductsHandler(
         );
 
         console.error(
-            error.response?.data || error,
+            error.response?.data ||
+            error,
         );
 
         res.status(500).json({
-            message: "Ozon request failed",
+            message:
+                "Ozon request failed",
 
-            error: error.message,
+            error:
+            error.message,
 
             ozonError:
             error.response?.data,
@@ -212,16 +166,15 @@ export async function getOzonProductDetailsHandler(
     res: Response,
 ) {
     try {
-        const productId = Number(
-            req.params.productId,
-        );
-
-        /*
-         * Проверяем productId
-         */
+        const productId =
+            Number(
+                req.params.productId,
+            );
 
         if (
-            !Number.isInteger(productId) ||
+            !Number.isInteger(
+                productId,
+            ) ||
             productId <= 0
         ) {
             return res.status(400).json({
@@ -234,18 +187,10 @@ export async function getOzonProductDetailsHandler(
             `🔎 Запрос деталей товара: ${productId}`,
         );
 
-        /*
-         * Запрашиваем товар у Ozon
-         */
-
         const data =
             await getOzonProductDetails(
                 productId,
             );
-
-        /*
-         * Проверяем наличие товара
-         */
 
         if (
             !data?.items ||
@@ -257,11 +202,7 @@ export async function getOzonProductDetailsHandler(
             });
         }
 
-        /*
-         * Возвращаем один товар
-         */
-
-        return res.json(
+        res.json(
             data.items[0],
         );
     } catch (error: any) {
@@ -274,11 +215,12 @@ export async function getOzonProductDetailsHandler(
             error,
         );
 
-        return res.status(500).json({
+        res.status(500).json({
             message:
                 "Ozon product details request failed",
 
-            error: error.message,
+            error:
+            error.message,
 
             ozonError:
             error.response?.data,

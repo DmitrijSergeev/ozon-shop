@@ -1,80 +1,107 @@
 import { useState } from "react";
+
 import type { SearchType } from "../api/ozonApi";
 
 interface ProductSearchProps {
     onSearch: (
         search: string,
-        searchType: SearchType
+        searchType: SearchType,
     ) => void;
 }
 
 function ProductSearch({
                            onSearch,
                        }: ProductSearchProps) {
-    const [search, setSearch] = useState("");
-
+    const [value, setValue] = useState("");
     const [searchType, setSearchType] =
         useState<SearchType>("offer_id");
 
     function handleSubmit(
-        event: React.FormEvent<HTMLFormElement>
+        event: React.FormEvent<HTMLFormElement>,
     ) {
         event.preventDefault();
 
-        onSearch(search, searchType);
+        onSearch(
+            value.trim(),
+            searchType,
+        );
     }
 
-    function handleReset() {
-        setSearch("");
-        setSearchType("offer_id");
+    function handleClear() {
+        setValue("");
 
-        onSearch("", "offer_id");
+        onSearch(
+            "",
+            searchType,
+        );
     }
 
     return (
         <form
-            onSubmit={handleSubmit}
             className="product-search"
+            onSubmit={handleSubmit}
         >
-            <select
-                value={searchType}
-                onChange={(event) =>
-                    setSearchType(
-                        event.target.value as SearchType
-                    )
-                }
-            >
-                <option value="offer_id">
-                    Offer ID
-                </option>
+            <div className="product-search-type">
+                <label htmlFor="search-type">
+                    Искать по:
+                </label>
 
-                <option value="product_id">
-                    Product ID
-                </option>
+                <select
+                    id="search-type"
+                    value={searchType}
+                    onChange={(event) =>
+                        setSearchType(
+                            event.target
+                                .value as SearchType,
+                        )
+                    }
+                >
+                    <option value="offer_id">
+                        Offer ID
+                    </option>
 
-                <option value="sku">
-                    SKU
-                </option>
-            </select>
+                    <option value="product_id">
+                        Product ID
+                    </option>
 
-            <input
-                type="text"
-                value={search}
-                onChange={(event) =>
-                    setSearch(event.target.value)
-                }
-                placeholder="Введите значение"
-            />
+                    <option value="sku">
+                        SKU
+                    </option>
+                </select>
+            </div>
 
-            <button type="submit">
-                Найти
-            </button>
+            <div className="product-search-input">
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(event) =>
+                        setValue(event.target.value)
+                    }
+                    placeholder={
+                        searchType === "offer_id"
+                            ? "Введите Offer ID"
+                            : searchType === "product_id"
+                                ? "Введите Product ID"
+                                : "Введите SKU"
+                    }
+                />
+
+                {value && (
+                    <button
+                        type="button"
+                        className="search-clear"
+                        onClick={handleClear}
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
 
             <button
-                type="button"
-                onClick={handleReset}
+                type="submit"
+                className="search-button"
             >
-                Сбросить
+                Найти
             </button>
         </form>
     );
