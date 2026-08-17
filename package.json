@@ -2,24 +2,17 @@
   "name": "ozon-shop",
   "version": "1.0.0",
   "description": "Full Stack интернет-магазин с интеграцией Ozon Seller API.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "private": true,
   "workspaces": [
     "frontend",
     "backend"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\""
+    "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "react-router": "^8.3.0",
-    "react-router-dom": "^7.18.2"
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

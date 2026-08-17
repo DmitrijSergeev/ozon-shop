@@ -2,9 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   getProducts,
   getProductById,
+  createProduct,
 } from "../services/product.service.js";
 import { NotFoundError } from "../errors/NotFoundError.js";
-import { createProduct } from "../services/product.service.js";
 
 export const createProductHandler = asyncHandler(async (req, res) => {
   const product = await createProduct(req.body);
@@ -21,11 +21,16 @@ export const getProductsHandler = asyncHandler(async (_req, res) => {
 export const getProductByIdHandler = asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
 
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ message: "Некорректный id" });
+    return;
+  }
+
   const product = await getProductById(id);
 
   if (!product) {
-  throw new NotFoundError("Product not found");
-}
+    throw new NotFoundError("Product not found");
+  }
 
   res.json(product);
 });

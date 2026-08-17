@@ -1,14 +1,19 @@
-import express from "express";
-import cors from "cors";
-import ozonRouter from "./routes/ozon.routes.js";
+import "dotenv/config";
+import { app } from "./app.js";
 
-const app = express();
+const port = Number(process.env.PORT) || 3000;
 
-app.use(cors());
-app.use(express.json());
-
-app.use("/api/ozon", ozonRouter);
-
-app.listen(3000, () => {
-  console.log("🚀 Server started on http://localhost:3000");
+const server = app.listen(port, () => {
+  console.log(`🚀 Server started on http://localhost:${port}`);
 });
+
+function shutdown(signal: string) {
+  console.log(`\n${signal} received, shutting down...`);
+
+  server.close(() => {
+    process.exit(0);
+  });
+}
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

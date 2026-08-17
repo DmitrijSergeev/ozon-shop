@@ -1,103 +1,140 @@
-export type SearchType =
-    | "offer_id"
-    | "product_id"
-    | "sku";
+export type SearchType = "offer_id" | "product_id" | "sku";
 
 export interface OzonProduct {
-    product_id: number;
-    offer_id: string;
-    has_fbo_stocks: boolean;
-    has_fbs_stocks: boolean;
-    archived: boolean;
-    is_discounted: boolean;
-    quants: unknown[];
-    sku: number;
+  product_id: number;
+  offer_id: string;
+  has_fbo_stocks: boolean;
+  has_fbs_stocks: boolean;
+  archived: boolean;
+  is_discounted: boolean;
+  quants: unknown[];
+  sku: number;
 }
 
 export interface OzonProductsResponse {
-    result: {
-        items: OzonProduct[];
-        total: number;
-        last_id: string;
-    };
+  result: {
+    items: OzonProduct[];
+    total: number;
+    last_id: string;
+  };
 }
 
 export interface GetOzonProductsParams {
-    search?: string;
-    searchType?: SearchType;
-    lastId?: string;
-    limit?: number;
-
-    fbo?: boolean;
-    fbs?: boolean;
-    archived?: boolean;
-    discounted?: boolean;
+  search?: string;
+  searchType?: SearchType;
+  lastId?: string;
+  limit?: number;
+  fbo?: boolean;
+  fbs?: boolean;
+  archived?: boolean;
+  discounted?: boolean;
 }
 
-export async function getOzonProducts({
-                                          search = "",
-                                          searchType = "offer_id",
-                                          lastId = "",
-                                          limit = 20,
-                                          fbo = false,
-                                          fbs = false,
-                                          archived = false,
-                                          discounted = false,
-                                      }: GetOzonProductsParams = {}): Promise<OzonProductsResponse> {
-    const params = new URLSearchParams();
+export interface Commission {
+  delivery_amount?: number;
+  percent?: number;
+  return_amount?: number;
+  sale_schema?: string;
+  value?: number;
+}
 
-    params.set("limit", String(limit));
+export interface Stock {
+  present: number;
+  reserved: number;
+  sku: number;
+  source: string;
+}
 
-    if (search.trim()) {
-        params.set("search", search.trim());
-        params.set("searchType", searchType);
-    }
+export interface ProductDetailsData {
+  id: number;
+  name: string;
+  offer_id: string;
+  is_archived: boolean;
+  is_autoarchived: boolean;
+  barcodes: string[];
+  created_at: string;
+  updated_at: string;
+  images: string[];
+  primary_image: string[];
+  currency_code: string;
+  min_price: string;
+  old_price: string;
+  price: string;
+  sku: number;
+  volume_weight: number;
+  vat: string;
+  is_discounted: boolean;
+  discounted_fbo_stocks: number;
+  has_discounted_fbo_item: boolean;
+  stocks: {
+    has_stock: boolean;
+    stocks: Stock[];
+  };
+  commissions: Commission[];
+  statuses?: {
+    status: string;
+    status_failed: string;
+    moderate_status: string;
+    validation_status: string;
+    status_name: string;
+    status_description: string;
+    status_tooltip: string;
+    is_created: boolean;
+    status_updated_at: string;
+  };
+  visibility_details?: {
+    has_price: boolean;
+    has_stock: boolean;
+  };
+}
 
-    if (lastId) {
-        params.set("last_id", lastId);
-    }
+export async function getOzonProducts(
+  params: GetOzonProductsParams = {},
+): Promise<OzonProductsResponse> {
+  const {
+    search = "",
+    searchType = "offer_id",
+    lastId = "",
+    limit = 20,
+    fbo = false,
+    fbs = false,
+    archived = false,
+    discounted = false,
+  } = params;
 
-    if (fbo) {
-        params.set("fbo", "true");
-    }
+  const query = new URLSearchParams();
 
-    if (fbs) {
-        params.set("fbs", "true");
-    }
+  query.set("limit", String(limit));
 
-    if (archived) {
-        params.set("archived", "true");
-    }
+  if (search.trim()) {
+    query.set("search", search.trim());
+    query.set("searchType", searchType);
+  }
 
-    if (discounted) {
-        params.set("discounted", "true");
-    }
+  if (lastId) query.set("last_id", lastId);
+  if (fbo) query.set("fbo", "true");
+  if (fbs) query.set("fbs", "true");
+  if (archived) query.set("archived", "true");
+  if (discounted) query.set("discounted", "true");
 
-    const response = await fetch(
-        `http://localhost:3000/api/ozon/products?${params.toString()}`
-    );
+  const response = await fetch(`/api/ozon/products?${query.toString()}`);
 
-    if (!response.ok) {
-        throw new Error(
-            "Не удалось получить товары Ozon"
-        );
-    }
+  if (!response.ok) {
+    throw new Error("Не удалось получить товары Ozon");
+  }
 
-    return response.json();
+  return response.json();
 }
 
 export async function getOzonProduct(
-    productId: number
-) {
-    const response = await fetch(
-        `http://localhost:3000/api/ozon/products/${productId}`
-    );
+  productId: number,
+): Promise<ProductDetailsData> {
+  const response = await fetch(`/api/ozon/products/${productId}`);
 
-    if (!response.ok) {
-        throw new Error(
-            "Не удалось загрузить товар"
-        );
-    }
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.message || "Не удалось загрузить товар");
+  }
 
-    return response.json();
+  return response.json();
 }

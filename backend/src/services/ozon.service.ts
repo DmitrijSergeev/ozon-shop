@@ -1,376 +1,175 @@
 import "dotenv/config";
 import axios from "axios";
 
-export const ozonApi = axios.create({
-    baseURL: "https://api-seller.ozon.ru",
+import type {
+  GetProductsParams,
+  OzonProduct,
+  OzonProductsResponse,
+  ProductFilters,
+} from "../types/ozon.js";
 
-    headers: {
-        "Client-Id": process.env.Client_ID,
-        "Api-Key": process.env.API_Key,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-    },
+const OZON_MAX_PAGES = 100;
+const OZON_FETCH_LIMIT = 1000;
+
+// Поддержка обоих вариантов имён переменных: каноничные OZON_* и
+// устаревшие без префикса. Позволяет коду работать со старым .env,
+// пока ключи не перенесены на OZON_CLIENT_ID / OZON_API_KEY.
+const ozonClientId = process.env.OZON_CLIENT_ID ?? process.env.Client_ID;
+const ozonApiKey = process.env.OZON_API_KEY ?? process.env.API_Key;
+
+export const ozonApi = axios.create({
+  baseURL: "https://api-seller.ozon.ru",
+  headers: {
+    "Client-Id": ozonClientId,
+    "Api-Key": ozonApiKey,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
 });
 
-export type SearchType =
-    | "offer_id"
-    | "product_id"
-    | "sku";
-
-export interface ProductFilters {
-    fbo?: boolean;
-    fbs?: boolean;
-    archived?: boolean;
-    discounted?: boolean;
+interface ListFilter {
+  visibility: string;
+  offer_id?: string[];
+  product_id?: number[];
 }
 
-interface GetProductsParams extends ProductFilters {
-    lastId?: string;
-    limit?: number;
-    search?: string;
-    searchType?: SearchType;
-}
-
-interface OzonProduct {
-    product_id: number;
-    offer_id: string;
-    has_fbo_stocks: boolean;
-    has_fbs_stocks: boolean;
-    archived: boolean;
-    is_discounted: boolean;
-    quants: unknown[];
-    sku?: number;
-}
-
-interface OzonProductsResponse {
-    result: {
-        items: OzonProduct[];
-        total: number;
-        last_id: string;
-    };
-}
-
-/**
- * Проверяем, подходит ли товар под выбранные фильтры.
- */
 function matchesFilters(
-    product: OzonProduct,
-    filters: ProductFilters,
+  product: OzonProduct,
+  filters: ProductFilters,
 ): boolean {
-    if (
-        filters.fbo &&
-        !product.has_fbo_stocks
-    ) {
-        return false;
-    }
+  if (filters.fbo && !product.has_fbo_stocks) return false;
+  if (filters.fbs && !product.has_fbs_stocks) return false;
+  if (filters.archived && !product.archived) return false;
+  if (filters.discounted && !product.is_discounted) return false;
 
-    if (
-        filters.fbs &&
-        !product.has_fbs_stocks
-    ) {
-        return false;
-    }
-
-    if (
-        filters.archived &&
-        !product.archived
-    ) {
-        return false;
-    }
-
-    if (
-        filters.discounted &&
-        !product.is_discounted
-    ) {
-        return false;
-    }
-
-    return true;
+  return true;
 }
 
-/**
- * Проверяет, есть ли вообще активные фильтры.
- */
-function hasFilters(
-    filters: ProductFilters,
-): boolean {
-    return Boolean(
-        filters.fbo ||
-        filters.fbs ||
-        filters.archived ||
-        filters.discounted,
-    );
+function emptyResult(): OzonProductsResponse {
+  return {
+    result: {
+      items: [],
+      total: 0,
+      last_id: "",
+    },
+  };
 }
 
 /**
  * Получение списка товаров Ozon.
  *
- * Важный момент:
- *
- * Ozon отдаёт cursor pagination через last_id.
- *
- * Если фильтры включены, мы НЕ ограничиваем
- * первый запрос 20 товарами.
- *
- * Иначе можем получить:
- *
- * 20 товаров Ozon
- * ↓
- * только 2 подходят под FBO
- *
- * и ошибочно показать пользователю только 2 товара.
- *
- * Поэтому при наличии фильтров получаем большие
- * пачки Ozon и продолжаем запрашивать следующие
- * страницы, пока не наберём 20 подходящих товаров.
+ * Ozon отдаёт cursor pagination через last_id. Если включены наши
+ * фильтры или поиск по SKU, мы не ограничиваем первый запрос 20
+ * товарами — иначе можно получить страницу, в которой почти все
+ * товары отфильтрованы. Поэтому при локальной фильтрации забираем
+ * большие пачки Ozon, пока не наберём limit подходящих товаров.
  */
-export async function getOzonProducts({
-                                          lastId = "",
-                                          limit = 20,
-                                          search = "",
-                                          searchType = "offer_id",
-                                          fbo = false,
-                                          fbs = false,
-                                          archived = false,
-                                          discounted = false,
-                                      }: GetProductsParams = {}) {
-    console.log("➡️ Запрос списка товаров Ozon");
+export async function getOzonProducts(
+  params: GetProductsParams = {},
+): Promise<OzonProductsResponse> {
+  const {
+    lastId = "",
+    limit = 20,
+    search = "",
+    searchType = "offer_id",
+    fbo = false,
+    fbs = false,
+    archived = false,
+    discounted = false,
+  } = params;
 
-    const value = search.trim();
+  const value = search.trim();
 
-    const filter: {
-        visibility: string;
-        offer_id?: string[];
-        product_id?: number[];
-    } = {
-        visibility: "ALL",
-    };
+  const filter: ListFilter = { visibility: "ALL" };
 
-    /*
-     * Поиск по offer_id
-     */
-    if (
-        value &&
-        searchType === "offer_id"
-    ) {
-        filter.offer_id = [value];
+  if (value && searchType === "offer_id") {
+    filter.offer_id = [value];
+  }
+
+  if (value && searchType === "product_id") {
+    const productId = Number(value);
+
+    if (!Number.isInteger(productId)) {
+      return emptyResult();
     }
 
-    /*
-     * Поиск по product_id
-     */
-    if (
-        value &&
-        searchType === "product_id"
-    ) {
-        const productId = Number(value);
+    filter.product_id = [productId];
+  }
 
-        if (!Number.isInteger(productId)) {
-            return {
-                result: {
-                    items: [],
-                    total: 0,
-                    last_id: "",
-                },
-            };
-        }
+  const searchSku =
+    value && searchType === "sku" ? Number(value) : null;
 
-        filter.product_id = [productId];
-    }
+  const filters: ProductFilters = { fbo, fbs, archived, discounted };
 
-    /*
-     * Для SKU используем последующую фильтрацию.
-     */
-    const searchSku =
-        value &&
-        searchType === "sku"
-            ? Number(value)
-            : null;
+  const needLocalFiltering =
+    fbo || fbs || archived || discounted || searchSku !== null;
 
-    /*
-     * Запрашиваем товары.
-     *
-     * Если есть наши фильтры или поиск SKU,
-     * берём большую пачку и фильтруем её.
-     *
-     * Если фильтров нет — обычная пагинация
-     * по 20 товаров.
-     */
-    const needLocalFiltering =
-        fbo ||
-        fbs ||
-        archived ||
-        discounted ||
-        searchSku !== null;
-
-    if (!needLocalFiltering) {
-        const response =
-            await ozonApi.post(
-                "/v3/product/list",
-                {
-                    filter,
-                    last_id: lastId,
-                    limit,
-                },
-            );
-
-        return response.data;
-    }
-
-    /*
-     * Здесь будем собирать страницу.
-     */
-    const result: any[] = [];
-
-    let currentLastId = lastId;
-
-    /*
-     * Защита от бесконечного цикла.
-     */
-    for (let i = 0; i < 100; i++) {
-        const response =
-            await ozonApi.post(
-                "/v3/product/list",
-                {
-                    filter,
-                    last_id: currentLastId,
-                    limit: 1000,
-                },
-            );
-
-        const items =
-            response.data?.result?.items || [];
-
-        const nextLastId =
-            response.data?.result?.last_id || "";
-
-        console.log(
-            `📦 Ozon вернул товаров: ${items.length}`,
-        );
-
-        /*
-         * Фильтруем текущую пачку.
-         */
-        for (const product of items) {
-            /*
-             * SKU
-             */
-            if (
-                searchSku !== null &&
-                Number(product.sku) !== searchSku
-            ) {
-                continue;
-            }
-
-            /*
-             * FBO
-             */
-            if (
-                fbo &&
-                !product.has_fbo_stocks
-            ) {
-                continue;
-            }
-
-            /*
-             * FBS
-             */
-            if (
-                fbs &&
-                !product.has_fbs_stocks
-            ) {
-                continue;
-            }
-
-            /*
-             * Архив
-             */
-            if (
-                archived &&
-                !product.archived
-            ) {
-                continue;
-            }
-
-            /*
-             * Скидка
-             */
-            if (
-                discounted &&
-                !product.is_discounted
-            ) {
-                continue;
-            }
-
-            result.push(product);
-
-            /*
-             * Нам уже достаточно товаров
-             * для одной страницы.
-             */
-            if (result.length >= limit) {
-                break;
-            }
-        }
-
-        /*
-         * Если уже набрали страницу —
-         * возвращаем результат.
-         */
-        if (result.length >= limit) {
-            return {
-                result: {
-                    items: result.slice(0, limit),
-                    total: result.length,
-                    last_id: nextLastId,
-                },
-            };
-        }
-
-        /*
-         * Ozon больше ничего не дал.
-         */
-        if (!nextLastId) {
-            return {
-                result: {
-                    items: result,
-                    total: result.length,
-                    last_id: "",
-                },
-            };
-        }
-
-        /*
-         * Переходим к следующей пачке Ozon.
-         */
-        currentLastId = nextLastId;
-    }
-
-    /*
-     * Защитное завершение.
-     */
-    return {
-        result: {
-            items: result.slice(0, limit),
-            total: result.length,
-            last_id: currentLastId,
-        },
-    };
-}
-export async function getOzonProductDetails(
-    productId: number,
-) {
-    console.log(
-        `➡️ Запрос подробной информации о товаре Ozon: ${productId}`,
+  if (!needLocalFiltering) {
+    const response = await ozonApi.post<OzonProductsResponse>(
+      "/v3/product/list",
+      { filter, last_id: lastId, limit },
     );
 
-    const response =
-        await ozonApi.post(
-            "/v3/product/info/list",
-            {
-                product_id: [productId],
-            },
-        );
-
     return response.data;
+  }
+
+  const collected: OzonProduct[] = [];
+  let currentLastId = lastId;
+
+  for (let page = 0; page < OZON_MAX_PAGES; page++) {
+    const response = await ozonApi.post<OzonProductsResponse>(
+      "/v3/product/list",
+      { filter, last_id: currentLastId, limit: OZON_FETCH_LIMIT },
+    );
+
+    const items = response.data?.result?.items ?? [];
+    const nextLastId = response.data?.result?.last_id ?? "";
+
+    for (const product of items) {
+      const skuMatches =
+        searchSku === null || Number(product.sku) === searchSku;
+
+      if (skuMatches && matchesFilters(product, filters)) {
+        collected.push(product);
+
+        if (collected.length >= limit) {
+          return {
+            result: {
+              items: collected.slice(0, limit),
+              total: collected.length,
+              last_id: nextLastId,
+            },
+          };
+        }
+      }
+    }
+
+    if (!nextLastId) {
+      return {
+        result: {
+          items: collected,
+          total: collected.length,
+          last_id: "",
+        },
+      };
+    }
+
+    currentLastId = nextLastId;
+  }
+
+  return {
+    result: {
+      items: collected.slice(0, limit),
+      total: collected.length,
+      last_id: currentLastId,
+    },
+  };
+}
+
+export async function getOzonProductDetails(productId: number) {
+  const response = await ozonApi.post("/v3/product/info/list", {
+    product_id: [productId],
+  });
+
+  return response.data;
 }
