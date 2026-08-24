@@ -1,3 +1,5 @@
+import { apiFetch } from "./client.js";
+
 export type SearchType = "offer_id" | "product_id" | "sku";
 
 export interface OzonProduct {
@@ -117,24 +119,11 @@ export async function getOzonProducts(
   if (archived) query.set("archived", "true");
   if (discounted) query.set("discounted", "true");
 
-  const response = await fetch(`/api/ozon/products?${query.toString()}`);
-
-  if (!response.ok) {
-    throw new Error("Не удалось получить товары Ozon");
-  }
-
-  return response.json();
+  return apiFetch<OzonProductsResponse>(`/api/ozon/products?${query.toString()}`);
 }
 
 export async function getOzonProduct(
   productId: number,
 ): Promise<ProductDetailsData> {
-  const response = await fetch(`/api/ozon/products/${productId}`);
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.message || "Не удалось загрузить товар");
-  }
-
-  return response.json();
+  return apiFetch<ProductDetailsData>(`/api/ozon/products/${productId}`);
 }

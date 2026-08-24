@@ -295,6 +295,88 @@ button {
   color: #adb5bd;
 }
 
+.badge-ok {
+  background: #e8f7ee;
+  color: #16803c;
+}
+
+.badge-out_of_stock {
+  background: #fdecec;
+  color: #c0392b;
+}
+
+.badge-low_stock {
+  background: #fff4e0;
+  color: #b9770e;
+}
+
+/* =========================
+   TOOLBAR (search + sort)
+========================= */
+
+.products-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.products-search {
+  flex: 1;
+  min-width: 240px;
+
+  padding: 11px 14px;
+
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+
+  font-size: 14px;
+}
+
+.products-search:focus {
+  outline: none;
+  border-color: #005bff;
+  box-shadow: 0 0 0 3px rgba(0, 91, 255, 0.12);
+}
+
+.products-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 14px;
+  color: #495057;
+}
+
+.products-sort select {
+  padding: 9px 10px;
+
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+
+  font-size: 14px;
+}
+
+.sort-order {
+  width: 36px;
+  height: 36px;
+
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  font-size: 16px;
+
+  cursor: pointer;
+}
+
+.sort-order:hover {
+  background: #f7f8fa;
+}
+
 /* =========================
    STATES
 ========================= */
