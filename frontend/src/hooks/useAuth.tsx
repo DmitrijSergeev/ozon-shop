@@ -14,24 +14,26 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-
-  const isAuthenticated = Boolean(getToken());
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getToken()));
 
   async function login(email: string, password: string) {
     const result = await apiLogin(email, password);
     setToken(result.token);
     setUser(result.user);
+    setIsAuthenticated(true);
   }
 
   async function register(email: string, password: string) {
     const result = await apiRegister(email, password);
     setToken(result.token);
     setUser(result.user);
+    setIsAuthenticated(true);
   }
 
   function logout() {
     clearToken();
     setUser(null);
+    setIsAuthenticated(false);
   }
 
   return (

@@ -209,7 +209,7 @@ function ProductList() {
                   <tr
                     key={product.id}
                     className="product-row"
-                    onClick={() => navigate(`/products/${product.ozonId}`)}
+                    onClick={() => navigate(`/products/${product.id}`)}
                   >
                     <td className="product-name-cell">
                       <div className="product-name">

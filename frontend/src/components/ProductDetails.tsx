@@ -2,71 +2,67 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
-  getOzonProduct,
+  getProductDetails,
   type ProductDetailsData,
-} from "../api/ozonApi";
+} from "../api/productDetails";
+import { listShops } from "../api/shop";
+import "./productDetails.css";
+
+function formatMoney(value: number | null): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("ru-RU", {
+    style: "currency",
+    currency: "RUB",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 function ProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
+  const [shopId, setShopId] = useState("");
   const [product, setProduct] = useState<ProductDetailsData | null>(null);
-  const [loading, setLoading] = useState<boolean>(Boolean(productId));
-  const [error, setError] = useState<string>(
-    productId ? "" : "Не указан product_id",
-  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!productId) return;
+    listShops()
+      .then((shops) => {
+        if (shops.length > 0) {
+          setShopId(shops[0].id);
+        }
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"));
+  }, []);
+
+  useEffect(() => {
+    if (!shopId || !productId) return;
 
     let ignore = false;
 
-    async function loadProduct() {
-      try {
-        setLoading(true);
-        setError("");
+    setLoading(true);
+    setError("");
 
-        const data = await getOzonProduct(Number(productId));
-
-        if (!ignore) {
-          setProduct(data);
-        }
-      } catch (err) {
-        console.error(err);
-
-        if (!ignore) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Не удалось загрузить товар",
-          );
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadProduct();
+    getProductDetails(shopId, productId)
+      .then((data) => {
+        if (!ignore) setProduct(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err instanceof Error ? err.message : "Ошибка");
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
 
     return () => {
       ignore = true;
     };
-  }, [productId]);
-
-  if (!productId) {
-    return (
-      <main>
-        <button onClick={() => navigate(-1)}>← Назад</button>
-        <p>Не указан product_id</p>
-      </main>
-    );
-  }
+  }, [shopId, productId]);
 
   if (loading) {
     return (
-      <main>
+      <main className="product-details">
         <p>Загрузка товара...</p>
       </main>
     );
@@ -74,201 +70,136 @@ function ProductDetails() {
 
   if (error) {
     return (
-      <main>
-        <button onClick={() => navigate(-1)}>← Назад</button>
-        <p>{error}</p>
+      <main className="product-details">
+        <button type="button" onClick={() => navigate(-1)}>
+          ← Назад
+        </button>
+        <p className="auth-error">{error}</p>
       </main>
     );
   }
 
   if (!product) {
     return (
-      <main>
-        <button onClick={() => navigate(-1)}>← Назад</button>
+      <main className="product-details">
+        <button type="button" onClick={() => navigate(-1)}>
+          ← Назад
+        </button>
         <p>Товар не найден</p>
       </main>
     );
   }
 
-  const fboStocks =
-    product.stocks?.stocks?.filter((stock) => stock.source === "fbo") ?? [];
-
-  const fboPresent = fboStocks.reduce(
-    (total, stock) => total + stock.present,
-    0,
-  );
-
-  const fboReserved = fboStocks.reduce(
-    (total, stock) => total + stock.reserved,
-    0,
+  const maxChartRevenue = Math.max(
+    1,
+    ...product.salesChart.map((p) => p.revenue),
   );
 
   return (
     <main className="product-details">
-      <button type="button" onClick={() => navigate(-1)}>
+      <button type="button" onClick={() => navigate("/products")}>
         ← Назад к товарам
       </button>
 
       <div className="product-details-header">
         <div className="product-details-images">
-          {product.primary_image?.length > 0 ? (
-            <img src={product.primary_image[0]} alt={product.name} />
-          ) : product.images?.length > 0 ? (
-            <img src={product.images[0]} alt={product.name} />
+          {product.image ? (
+            <img src={product.image} alt={product.name ?? "Товар"} />
           ) : (
-            <div>Нет изображения</div>
+            <div className="product-image-placeholder">Нет изображения</div>
           )}
         </div>
 
         <div className="product-details-main">
-          <h1>{product.name}</h1>
+          <h1>{product.name || `Товар ${product.offerId}`}</h1>
 
-          <p>
-            <strong>Offer ID:</strong> {product.offer_id}
-          </p>
-
-          <p>
-            <strong>Product ID:</strong> {product.id}
-          </p>
-
-          <p>
-            <strong>SKU:</strong> {product.sku}
-          </p>
+          <dl className="product-meta">
+            <div>
+              <dt>Артикул</dt>
+              <dd>{product.offerId}</dd>
+            </div>
+            <div>
+              <dt>SKU</dt>
+              <dd>{product.sku ?? "—"}</dd>
+            </div>
+            <div>
+              <dt>Ozon ID</dt>
+              <dd>{product.ozonId}</dd>
+            </div>
+          </dl>
 
           <div className="product-price">
-            <strong>
-              {product.price} {product.currency_code}
-            </strong>
-
-            {product.old_price && (
-              <span>
-                {product.old_price} {product.currency_code}
+            <strong>{formatMoney(product.price)}</strong>
+            {product.oldPrice !== null && (
+              <span className="product-old-price">
+                {formatMoney(product.oldPrice)}
               </span>
             )}
           </div>
 
-          {product.is_discounted && <p>🏷️ Товар со скидкой</p>}
+          <div className="product-sales-summary">
+            <div>
+              <span className="metric-label">Продажи</span>
+              <span className="metric-value">{product.sales}</span>
+            </div>
+            <div>
+              <span className="metric-label">Выручка</span>
+              <span className="metric-value">{formatMoney(product.revenue)}</span>
+            </div>
+          </div>
 
-          {product.is_archived && <p>📦 Архивный товар</p>}
+          {product.isDiscounted && <p>🏷️ Товар со скидкой</p>}
+          {product.archived && <p>📦 Архивный товар</p>}
         </div>
       </div>
 
       <section className="product-details-section">
+        <h2>Продажи за 30 дней</h2>
+
+        <div className="sales-chart">
+          {product.salesChart.map((point) => (
+            <div key={point.date} className="sales-chart-column">
+              <div
+                className="sales-chart-bar"
+                style={{
+                  height: `${Math.round((point.revenue / maxChartRevenue) * 100)}%`,
+                }}
+                title={`${point.date}: ${point.orders} зак., ${formatMoney(point.revenue)}`}
+              />
+              <span className="sales-chart-label">
+                {point.date.slice(8, 10)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <p className="chart-hint">
+          По дням: количество заказов и выручка (наведите на столбец)
+        </p>
+      </section>
+
+      <section className="product-details-section">
         <h2>Остатки</h2>
 
-        <div className="product-info-grid">
-          <div>
-            <strong>FBO:</strong>
-            <span>{fboPresent} шт.</span>
+        <div className="stock-info-grid">
+          <div className="stock-info-card">
+            <span className="metric-label">Текущий остаток</span>
+            <span className="metric-value">{product.stockInfo.current} шт.</span>
           </div>
-
-          <div>
-            <strong>Зарезервировано FBO:</strong>
-            <span>{fboReserved} шт.</span>
+          <div className="stock-info-card">
+            <span className="metric-label">Средние продажи</span>
+            <span className="metric-value">
+              {product.stockInfo.averageSalesPerDay} шт./день
+            </span>
           </div>
-
-          <div>
-            <strong>Есть остатки:</strong>
-            <span>{product.stocks?.has_stock ? "Да" : "Нет"}</span>
+          <div className="stock-info-card">
+            <span className="metric-label">Примерный запас</span>
+            <span className="metric-value">
+              {product.stockInfo.estimatedDays === null
+                ? "—"
+                : `${product.stockInfo.estimatedDays} дней`}
+            </span>
           </div>
-
-          <div>
-            <strong>Уценённых FBO:</strong>
-            <span>{product.discounted_fbo_stocks}</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="product-details-section">
-        <h2>Статус</h2>
-
-        <div className="product-info-grid">
-          <div>
-            <strong>Статус:</strong>
-            <span>{product.statuses?.status_name || "—"}</span>
-          </div>
-
-          <div>
-            <strong>Модерация:</strong>
-            <span>{product.statuses?.moderate_status || "—"}</span>
-          </div>
-
-          <div>
-            <strong>Валидация:</strong>
-            <span>{product.statuses?.validation_status || "—"}</span>
-          </div>
-
-          <div>
-            <strong>Описание статуса:</strong>
-            <span>{product.statuses?.status_description || "—"}</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="product-details-section">
-        <h2>Характеристики</h2>
-
-        <div className="product-info-grid">
-          <div>
-            <strong>Вес:</strong>
-            <span>{product.volume_weight} кг</span>
-          </div>
-
-          <div>
-            <strong>НДС:</strong>
-            <span>{product.vat}</span>
-          </div>
-
-          <div>
-            <strong>Штрихкоды:</strong>
-            <span>{product.barcodes?.join(", ") || "—"}</span>
-          </div>
-
-          <div>
-            <strong>Дата создания:</strong>
-            <span>{new Date(product.created_at).toLocaleString("ru-RU")}</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="product-details-section">
-        <h2>Комиссии Ozon</h2>
-
-        {product.commissions?.length > 0 ? (
-          <div className="commissions">
-            {product.commissions.map((commission, index) => (
-              <div
-                className="commission"
-                key={commission.sale_schema ?? index}
-              >
-                <strong>{commission.sale_schema}</strong>
-
-                <span>Комиссия: {commission.percent}%</span>
-
-                <span>Сумма: {commission.value}</span>
-
-                <span>Доставка: {commission.delivery_amount}</span>
-
-                <span>Возврат: {commission.return_amount}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>Данные о комиссиях отсутствуют</p>
-        )}
-      </section>
-
-      <section className="product-details-section">
-        <h2>Фотографии</h2>
-
-        <div className="product-gallery">
-          {product.images?.map((image, index) => (
-            <img
-              key={`${image}-${index}`}
-              src={image}
-              alt={`${product.name} ${index + 1}`}
-            />
-          ))}
         </div>
       </section>
     </main>
