@@ -28,6 +28,9 @@ function SettingsPage() {
   async function reload() {
     const data = await listShops();
     setShops(data);
+    if (data.length > 0 && !selectedShopId) {
+      setSelectedShopId(data[0].id);
+    }
   }
 
   useEffect(() => {
@@ -71,6 +74,12 @@ function SettingsPage() {
     setError("");
     setMessage("");
     setLoading(true);
+
+    if (!selectedShopId) {
+      setError("Сначала выберите магазин");
+      setLoading(false);
+      return;
+    }
 
     try {
       await syncShop(selectedShopId);

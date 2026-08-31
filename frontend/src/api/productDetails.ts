@@ -6,10 +6,14 @@ export interface SalesChartPoint {
   revenue: number;
 }
 
+export type StockStatus = "green" | "yellow" | "orange" | "red" | "unknown";
+
 export interface StockInfo {
   current: number;
   averageSalesPerDay: number;
   estimatedDays: number | null;
+  status: StockStatus;
+  warning: string | null;
 }
 
 export interface ProductDetailsData {

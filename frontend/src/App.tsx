@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage.js";
 import SettingsPage from "./pages/SettingsPage.js";
 import ProductList from "./components/ProductList.js";
 import ProductDetails from "./components/ProductDetails.js";
+import PricesPage from "./pages/PricesPage.js";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -57,6 +58,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProductDetails />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/prices"
+        element={
+          <ProtectedRoute>
+            <PricesPage />
           </ProtectedRoute>
         }
       />

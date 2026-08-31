@@ -189,3 +189,49 @@
   border: 1px solid #edf0f2;
   border-radius: 10px;
 }
+
+.stock-analysis {
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid #e1e4e8;
+  background: #fafbfc;
+}
+
+.stock-analysis-status {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.stock-analysis-warning {
+  margin: 0;
+  font-size: 14px;
+  color: #343a40;
+}
+
+.stock-analysis--green {
+  border-left: 4px solid #22c55e;
+  background: #f0fdf4;
+}
+
+.stock-analysis--yellow {
+  border-left: 4px solid #eab308;
+  background: #fefce8;
+}
+
+.stock-analysis--orange {
+  border-left: 4px solid #f97316;
+  background: #fff7ed;
+}
+
+.stock-analysis--red {
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+
+.stock-analysis--unknown {
+  border-left: 4px solid #9ca3af;
+  background: #f9fafb;
+}

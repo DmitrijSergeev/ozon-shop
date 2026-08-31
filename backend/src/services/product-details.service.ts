@@ -27,10 +27,14 @@ export interface SalesChartPoint {
   revenue: number;
 }
 
+export type StockStatus = "green" | "yellow" | "orange" | "red" | "unknown";
+
 export interface StockInfo {
   current: number;
   averageSalesPerDay: number;
   estimatedDays: number | null;
+  status: StockStatus;
+  warning: string | null;
 }
 
 export async function getProductDetails(
@@ -140,9 +144,61 @@ function buildStockInfo(
   const estimatedDays =
     averageSalesPerDay > 0 ? Math.round(current / averageSalesPerDay) : null;
 
+  const { status, warning } = analyzeStock(current, averageSalesPerDay, estimatedDays);
+
   return {
     current,
     averageSalesPerDay: Number(averageSalesPerDay.toFixed(1)),
     estimatedDays,
+    status,
+    warning,
+  };
+}
+
+function analyzeStock(
+  current: number,
+  averageSalesPerDay: number,
+  estimatedDays: number | null,
+): { status: StockStatus; warning: string | null } {
+  // Нет остатка
+  if (current <= 0) {
+    return {
+      status: "red",
+      warning: "🔴 Товар закончился — остаток 0 шт.",
+    };
+  }
+
+  // Нет продаж — невозможно спрогнозировать
+  if (averageSalesPerDay <= 0 || estimatedDays === null) {
+    return {
+      status: "unknown",
+      warning: "Нет данных о продажах — прогноз недоступен.",
+    };
+  }
+
+  if (estimatedDays < 3) {
+    return {
+      status: "red",
+      warning: `🔴 Товар закончится примерно через ${estimatedDays} дн.`,
+    };
+  }
+
+  if (estimatedDays < 7) {
+    return {
+      status: "orange",
+      warning: `🟠 Товар закончится примерно через ${estimatedDays} дн.`,
+    };
+  }
+
+  if (estimatedDays < 14) {
+    return {
+      status: "yellow",
+      warning: `🟡 Товар закончится примерно через ${estimatedDays} дн.`,
+    };
+  }
+
+  return {
+    status: "green",
+    warning: `🟢 Запаса хватит более чем на 14 дней (≈${estimatedDays} дн.).`,
   };
 }

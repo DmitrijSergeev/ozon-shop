@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getProductDetails,
   type ProductDetailsData,
+  type StockStatus,
 } from "../api/productDetails";
 import { listShops } from "../api/shop";
 import "./productDetails.css";
@@ -16,6 +17,14 @@ function formatMoney(value: number | null): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+const STOCK_STATUS_LABELS: Record<StockStatus, string> = {
+  green: "🟢 Более 14 дней",
+  yellow: "🟡 7–14 дней",
+  orange: "🟠 3–7 дней",
+  red: "🔴 Менее 3 дней",
+  unknown: "⚪ Нет данных",
+};
 
 function ProductDetails() {
   const { productId } = useParams();
@@ -200,6 +209,15 @@ function ProductDetails() {
                 : `${product.stockInfo.estimatedDays} дней`}
             </span>
           </div>
+        </div>
+
+        <div className={`stock-analysis stock-analysis--${product.stockInfo.status}`}>
+          <span className="stock-analysis-status">
+            {STOCK_STATUS_LABELS[product.stockInfo.status]}
+          </span>
+          {product.stockInfo.warning && (
+            <p className="stock-analysis-warning">{product.stockInfo.warning}</p>
+          )}
         </div>
       </section>
     </main>
