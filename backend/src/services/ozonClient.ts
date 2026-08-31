@@ -65,9 +65,20 @@ export interface OzonPriceResponse {
 
 export interface OzonOrderItem {
   order_id: number;
+  posting_number?: string;
   status: string;
   total_price: string;
   created_at: string;
+  in_process_at?: string;
+  products?: OzonOrderProduct[];
+}
+
+export interface OzonOrderProduct {
+  sku: number;
+  name: string;
+  quantity: number;
+  offer_id: string;
+  price: string;
 }
 
 export interface OzonOrderResponse {

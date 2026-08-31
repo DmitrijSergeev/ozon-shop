@@ -63,6 +63,7 @@ export async function getProducts(
     include: {
       prices: { orderBy: { updatedAt: "desc" }, take: 1 },
       stocks: true,
+      orderItems: { select: { quantity: true, price: true } },
     },
   });
 
@@ -71,6 +72,15 @@ export async function getProducts(
     const oldPrice = product.prices[0]?.oldPrice ?? null;
     const stock = product.stocks.reduce((sum, s) => sum + s.present, 0);
     const reserved = product.stocks.reduce((sum, s) => sum + s.reserved, 0);
+
+    const sales = product.orderItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    const revenue = product.orderItems.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
 
     let status: ProductRow["status"] = "ok";
     if (product.archived) {
@@ -91,8 +101,8 @@ export async function getProducts(
       oldPrice: oldPrice !== null ? Number(oldPrice) : null,
       stock,
       reserved,
-      sales: 0,
-      revenue: 0,
+      sales,
+      revenue: Number(revenue.toFixed(2)),
       archived: product.archived,
       status,
     };

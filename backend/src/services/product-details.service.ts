@@ -1,8 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { NotFoundError } from "../errors/NotFoundError.js";
 
-const LOW_STOCK_THRESHOLD = 5;
-
 export interface ProductDetails {
   id: string;
   ozonId: string;
@@ -58,13 +56,19 @@ export async function getProductDetails(
   const stock = product.stocks.reduce((sum, s) => sum + s.present, 0);
   const reserved = product.stocks.reduce((sum, s) => sum + s.reserved, 0);
 
-  // Продажи и выручка по товару требуют связи Order -> Product (позиции заказа).
-  // В текущей схеме этой связи нет, поэтому возвращаем нули.
-  // После расширения схемы (модель OrderItem) эти значения заполнятся реальными данными.
-  const sales = 0;
-  const revenue = 0;
+  // Продажи и выручка по товару из позиций заказов (OrderItem)
+  const orderItems = await prisma.orderItem.findMany({
+    where: { productId: product.id },
+    select: { quantity: true, price: true, createdAt: true },
+  });
 
-  const salesChart = buildSalesChart();
+  const sales = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+  const revenue = orderItems.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0,
+  );
+
+  const salesChart = buildSalesChart(orderItems);
   const stockInfo = buildStockInfo(stock, salesChart);
 
   return {
@@ -82,24 +86,44 @@ export async function getProductDetails(
     archived: product.archived,
     isDiscounted: product.isDiscounted,
     sales,
-    revenue,
+    revenue: Number(revenue.toFixed(2)),
     salesChart,
     stockInfo,
   };
 }
 
-function buildSalesChart(): SalesChartPoint[] {
+function buildSalesChart(
+  orderItems: { quantity: number; price: number; createdAt: Date }[],
+): SalesChartPoint[] {
   const points: SalesChartPoint[] = [];
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Инициализируем 30 дней
+  const byDate = new Map<string, { orders: number; revenue: number }>();
 
   for (let i = 29; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
+    const key = date.toISOString().slice(0, 10);
+    byDate.set(key, { orders: 0, revenue: 0 });
+  }
 
+  // Заполняем данными из позиций заказов
+  for (const item of orderItems) {
+    const key = item.createdAt.toISOString().slice(0, 10);
+    const bucket = byDate.get(key);
+    if (!bucket) continue;
+
+    bucket.orders += item.quantity;
+    bucket.revenue += Number(item.price) * item.quantity;
+  }
+
+  for (const [date, data] of byDate) {
     points.push({
-      date: date.toISOString().slice(0, 10),
-      orders: 0,
-      revenue: 0,
+      date,
+      orders: data.orders,
+      revenue: Number(data.revenue.toFixed(2)),
     });
   }
 

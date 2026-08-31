@@ -202,12 +202,13 @@ async function upsertPrices(shopId: string, prices: OzonPriceItem[]) {
 }
 
 async function fetchRecentOrders(client: ReturnType<typeof createOzonClient>): Promise<OzonOrderItem[]> {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   try {
     const response = await client.post("/v3/posting/fbs/list", {
       filter: { since, status: "" },
       limit: 100,
+      with: { analytics_data: false, barcodes: false, financial_data: false },
     });
 
     return response.data?.result ?? [];
@@ -218,7 +219,7 @@ async function fetchRecentOrders(client: ReturnType<typeof createOzonClient>): P
 
 async function upsertOrders(shopId: string, orders: OzonOrderItem[]) {
   for (const o of orders) {
-    await prisma.order.upsert({
+    const order = await prisma.order.upsert({
       where: { shopId_ozonOrderId: { shopId, ozonOrderId: String(o.order_id) } },
       create: {
         shopId,
@@ -229,6 +230,42 @@ async function upsertOrders(shopId: string, orders: OzonOrderItem[]) {
       update: {
         status: o.status,
         amount: Number(o.total_price) || 0,
+      },
+    });
+
+    await upsertOrderItems(shopId, order.id, o);
+  }
+}
+
+async function upsertOrderItems(
+  shopId: string,
+  orderId: string,
+  order: OzonOrderItem,
+) {
+  if (!order.products || order.products.length === 0) return;
+
+  for (const item of order.products) {
+    // Привязываем позицию к товару по SKU (числовой) или offer_id
+    const product = await prisma.product.findFirst({
+      where: {
+        shopId,
+        OR: [
+          { sku: item.sku ?? undefined },
+          { offerId: item.offer_id },
+        ],
+      },
+    });
+
+    if (!product) continue;
+
+    await prisma.orderItem.create({
+      data: {
+        shopId,
+        orderId,
+        productId: product.id,
+        sku: item.sku ?? null,
+        quantity: item.quantity,
+        price: Number(item.price) || 0,
       },
     });
   }
