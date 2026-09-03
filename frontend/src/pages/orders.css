@@ -1,0 +1,135 @@
+/* =========================
+   ORDERS PAGE
+========================= */
+
+.orders-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.orders-page h1 {
+  margin: 0 0 20px;
+  font-size: 24px;
+}
+
+.orders-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.orders-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.orders-filters input,
+.orders-filters select {
+  padding: 8px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.orders-table-wrap {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edf0f2;
+  vertical-align: top;
+}
+
+.orders-table th {
+  background: #fafbfc;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.orders-table th.num,
+.orders-table td.num {
+  text-align: right;
+}
+
+.orders-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.orders-id {
+  font-weight: 500;
+  color: #202124;
+  white-space: nowrap;
+}
+
+.order-scheme {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.order-scheme-fbs {
+  background: #e8f0fe;
+  color: #1a56db;
+}
+
+.order-scheme-fbo {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.orders-products {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orders-product-line {
+  font-size: 13px;
+  color: #374151;
+}
+
+.orders-no-products {
+  color: #c3c9cf;
+}
+
+.order-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f1f3f5;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.orders-empty {
+  margin-top: 16px;
+  color: #6b7280;
+  font-size: 14px;
+}

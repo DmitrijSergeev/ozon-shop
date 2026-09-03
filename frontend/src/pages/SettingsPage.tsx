@@ -4,6 +4,7 @@ import {
   createShop,
   connectOzon,
   syncShop,
+  getLastSync,
   type Shop,
 } from "../api/shop.js";
 
@@ -15,6 +16,14 @@ const STATUS_LABELS: Record<string, string> = {
   reconnect_required: "Требуется переподключение",
 };
 
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function SettingsPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [newShopName, setNewShopName] = useState("");
@@ -24,6 +33,7 @@ function SettingsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
 
   async function reload() {
     const data = await listShops();
@@ -33,9 +43,23 @@ function SettingsPage() {
     }
   }
 
+  async function reloadLastSync(shopId: string) {
+    if (!shopId) return;
+    try {
+      const { last } = await getLastSync(shopId);
+      setLastSync(last ? formatTime(last.finishedAt) : null);
+    } catch {
+      setLastSync(null);
+    }
+  }
+
   useEffect(() => {
     reload().catch((err) => setError(err instanceof Error ? err.message : "Ошибка"));
   }, []);
+
+  useEffect(() => {
+    reloadLastSync(selectedShopId);
+  }, [selectedShopId]);
 
   async function handleCreateShop(event: React.FormEvent) {
     event.preventDefault();
@@ -84,6 +108,7 @@ function SettingsPage() {
     try {
       await syncShop(selectedShopId);
       setMessage("Синхронизация завершена");
+      await reloadLastSync(selectedShopId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {
@@ -150,9 +175,16 @@ function SettingsPage() {
             </button>
           </form>
 
-          <button type="button" onClick={handleSync} disabled={loading}>
-            Синхронизировать данные
-          </button>
+          <div className="sync-controls">
+            <p className="last-sync">
+              {lastSync
+                ? `Последняя синхронизация: ${lastSync}`
+                : "Синхронизация ещё не выполнялась"}
+            </p>
+            <button type="button" onClick={handleSync} disabled={loading}>
+              Обновить сейчас
+            </button>
+          </div>
         </section>
       )}
 

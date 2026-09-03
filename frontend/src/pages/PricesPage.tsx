@@ -4,7 +4,8 @@ import {
   updatePrices,
   type PriceRow,
 } from "../api/prices.js";
-import { listShops } from "../api/shop.js";
+import { useShop } from "../hooks/useShop.js";
+import ShopSelector from "../components/ShopSelector.js";
 import "./prices.css";
 
 function formatMoney(value: number | null): string {
@@ -19,7 +20,7 @@ function formatMoney(value: number | null): string {
 type BulkAction = "plus5" | "plus10" | "minus5" | "minus10" | "fixed";
 
 function PricesPage() {
-  const [shopId, setShopId] = useState("");
+  const { shopId } = useShop();
   const [items, setItems] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,14 +36,6 @@ function PricesPage() {
   const [fixedPrice, setFixedPrice] = useState("");
 
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    listShops()
-      .then((shops) => {
-        if (shops.length > 0) setShopId(shops[0].id);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"));
-  }, []);
 
   useEffect(() => {
     if (!shopId) return;
@@ -192,7 +185,10 @@ function PricesPage() {
 
   return (
     <main className="prices-page">
-      <h1>Управление ценами</h1>
+      <div className="page-header">
+        <h1>Управление ценами</h1>
+        <ShopSelector />
+      </div>
 
       <div className="prices-toolbar">
         <div className="bulk-actions">

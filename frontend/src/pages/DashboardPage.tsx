@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  listShops,
   getDashboard,
   getAttention,
-  type Shop,
   type DashboardMetrics,
   type AttentionItem,
 } from "../api/shop.js";
+import { useShop } from "../hooks/useShop.js";
+import ShopSelector from "../components/ShopSelector.js";
 
 const SEVERITY_LABELS: Record<string, string> = {
   red: "🔴",
@@ -28,39 +28,26 @@ function formatMoney(value: number): string {
 function DashboardPage() {
   const navigate = useNavigate();
 
-  const [shops, setShops] = useState<Shop[]>([]);
-  const [selectedShopId, setSelectedShopId] = useState<string>("");
+  const { shops, shopId } = useShop();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [attention, setAttention] = useState<AttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    listShops()
-      .then((data) => {
-        setShops(data);
-        if (data.length > 0) {
-          setSelectedShopId(data[0].id);
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (!selectedShopId) return;
+    if (!shopId) return;
 
     setLoading(true);
     setError("");
 
-    Promise.all([getDashboard(selectedShopId), getAttention(selectedShopId)])
+    Promise.all([getDashboard(shopId), getAttention(shopId)])
       .then(([dashboard, attentionData]) => {
         setMetrics(dashboard.metrics);
         setAttention(attentionData.items);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"))
       .finally(() => setLoading(false));
-  }, [selectedShopId]);
+  }, [shopId]);
 
   if (loading && !metrics) {
     return (
@@ -94,16 +81,7 @@ function DashboardPage() {
     <main className="dashboard-page">
       <div className="dashboard-header">
         <h1>Dashboard</h1>
-        <select
-          value={selectedShopId}
-          onChange={(e) => setSelectedShopId(e.target.value)}
-        >
-          {shops.map((shop) => (
-            <option key={shop.id} value={shop.id}>
-              {shop.name}
-            </option>
-          ))}
-        </select>
+        <ShopSelector />
       </div>
 
       {metrics && (

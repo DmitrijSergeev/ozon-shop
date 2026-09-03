@@ -1,0 +1,122 @@
+/* =========================
+   STOCKS PAGE
+========================= */
+
+.stocks-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.stocks-page h1 {
+  margin: 0 0 20px;
+  font-size: 24px;
+}
+
+.stocks-filter {
+  margin-bottom: 16px;
+}
+
+.stocks-filter label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.stocks-filter select {
+  padding: 8px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.stocks-table-wrap {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+}
+
+.stocks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stocks-table th,
+.stocks-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.stocks-table th {
+  background: #fafbfc;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.stocks-table th.num,
+.stocks-table td.num {
+  text-align: right;
+}
+
+.stocks-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.stocks-product-name {
+  font-weight: 500;
+  color: #202124;
+}
+
+.stocks-product-offer {
+  font-size: 12px;
+  color: #8a9199;
+}
+
+.stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stock-green {
+  background: #e8f7ee;
+  color: #15803d;
+}
+
+.stock-yellow {
+  background: #fef9e7;
+  color: #b45309;
+}
+
+.stock-orange {
+  background: #fff3e6;
+  color: #c2410c;
+}
+
+.stock-red {
+  background: #fdeaea;
+  color: #b91c1c;
+}
+
+.stock-unknown {
+  background: #f1f3f5;
+  color: #6b7280;
+}
+
+.stocks-empty {
+  margin-top: 16px;
+  color: #6b7280;
+  font-size: 14px;
+}

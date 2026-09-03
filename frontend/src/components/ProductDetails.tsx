@@ -6,7 +6,7 @@ import {
   type ProductDetailsData,
   type StockStatus,
 } from "../api/productDetails";
-import { listShops } from "../api/shop";
+import { useShop } from "../hooks/useShop.js";
 import "./productDetails.css";
 
 function formatMoney(value: number | null): string {
@@ -30,20 +30,10 @@ function ProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  const [shopId, setShopId] = useState("");
+  const { shopId } = useShop();
   const [product, setProduct] = useState<ProductDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    listShops()
-      .then((shops) => {
-        if (shops.length > 0) {
-          setShopId(shops[0].id);
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"));
-  }, []);
 
   useEffect(() => {
     if (!shopId || !productId) return;

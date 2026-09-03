@@ -1,0 +1,162 @@
+/* =========================
+   ANALYTICS PAGE
+========================= */
+
+.analytics-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.analytics-page h1 {
+  margin: 0 0 20px;
+  font-size: 24px;
+}
+
+.analytics-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.analytics-periods {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.period-btn {
+  padding: 8px 16px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.15s;
+}
+
+.period-btn:hover {
+  border-color: #1a56db;
+  color: #1a56db;
+}
+
+.period-btn.active {
+  background: #1a56db;
+  border-color: #1a56db;
+  color: #ffffff;
+}
+
+.analytics-custom {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.analytics-custom label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.analytics-custom input {
+  padding: 8px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.analytics-section {
+  margin-bottom: 32px;
+}
+
+.analytics-section h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.analytics-chart {
+  width: 100%;
+  height: auto;
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.analytics-table-wrap {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.analytics-table th,
+.analytics-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #edf0f2;
+}
+
+.analytics-table th {
+  background: #fafbfc;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.analytics-table th.num,
+.analytics-table td.num {
+  text-align: right;
+}
+
+.analytics-table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.analytics-product-name {
+  font-weight: 500;
+  color: #202124;
+}
+
+.analytics-product-offer {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.analytics-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 24px;
+}
+
+.analytics-nosales {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.analytics-nosales-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #9a3412;
+  margin-bottom: 8px;
+}
+
+.analytics-nosales p {
+  margin: 0;
+  color: #7c2d12;
+  font-size: 14px;
+  line-height: 1.5;
+}

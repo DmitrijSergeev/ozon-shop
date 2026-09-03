@@ -44,7 +44,16 @@ export async function connectOzon(shopId: string, clientId: string, apiKey: stri
 export async function syncShop(shopId: string): Promise<{ status: string }> {
   return apiFetch<{ status: string }>(`/api/sync/${shopId}/sync`, {
     method: "POST",
+    body: JSON.stringify({ type: "full" }),
   });
+}
+
+export async function getLastSync(
+  shopId: string,
+): Promise<{ last: { type: string; finishedAt: string } | null }> {
+  return apiFetch<{ last: { type: string; finishedAt: string } | null }>(
+    `/api/sync/${shopId}/last`,
+  );
 }
 
 export async function getDashboard(shopId: string): Promise<{ metrics: DashboardMetrics }> {

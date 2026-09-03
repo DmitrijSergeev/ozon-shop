@@ -8,7 +8,8 @@ import {
   type SortOrder,
   type ProductsFilters,
 } from "../api/products";
-import { listShops } from "../api/shop";
+import { useShop } from "../hooks/useShop.js";
+import ShopSelector from "./ShopSelector.js";
 
 const DEFAULT_FILTERS: ProductsFilters = {
   inStock: false,
@@ -56,7 +57,7 @@ function formatMoney(value: number | null): string {
 function ProductList() {
   const navigate = useNavigate();
 
-  const [shopId, setShopId] = useState("");
+  const { shopId } = useShop();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -68,17 +69,6 @@ function ProductList() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [offset, setOffset] = useState(0);
   const limit = 20;
-
-  useEffect(() => {
-    listShops()
-      .then((shops) => {
-        if (shops.length > 0) {
-          setShopId(shops[0].id);
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Ошибка"))
-      .finally(() => setLoading(false));
-  }, []);
 
   useEffect(() => {
     if (!shopId) return;
@@ -122,6 +112,10 @@ function ProductList() {
 
   return (
     <section className="products-page">
+      <div className="page-header">
+        <ShopSelector />
+      </div>
+
       <div className="products-toolbar">
         <input
           type="text"
