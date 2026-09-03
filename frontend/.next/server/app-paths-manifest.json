@@ -1,10 +1,10 @@
 {
   "/(app)/page": "app/(app)/page.js",
-  "/(app)/orders/page": "app/(app)/orders/page.js",
-  "/(app)/stocks/page": "app/(app)/stocks/page.js",
   "/(app)/products/page": "app/(app)/products/page.js",
-  "/(app)/prices/page": "app/(app)/prices/page.js",
-  "/(app)/analytics/page": "app/(app)/analytics/page.js",
+  "/(app)/settings/page": "app/(app)/settings/page.js",
   "/(app)/problems/page": "app/(app)/problems/page.js",
-  "/(app)/settings/page": "app/(app)/settings/page.js"
+  "/(app)/analytics/page": "app/(app)/analytics/page.js",
+  "/(app)/stocks/page": "app/(app)/stocks/page.js",
+  "/(app)/prices/page": "app/(app)/prices/page.js",
+  "/(app)/orders/page": "app/(app)/orders/page.js"
 }

@@ -21,10 +21,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/products/page.js"
     ],
-    "/(app)/orders/page": [
+    "/(app)/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(app)/orders/page.js"
+      "static/chunks/app/(app)/settings/page.js"
+    ],
+    "/(app)/problems/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/problems/page.js"
+    ],
+    "/(app)/analytics/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/analytics/page.js"
     ],
     "/(app)/stocks/page": [
       "static/chunks/webpack.js",
@@ -36,20 +46,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/prices/page.js"
     ],
-    "/(app)/analytics/page": [
+    "/(app)/orders/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(app)/analytics/page.js"
-    ],
-    "/(app)/problems/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/problems/page.js"
-    ],
-    "/(app)/settings/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/settings/page.js"
+      "static/chunks/app/(app)/orders/page.js"
     ]
   }
 }
