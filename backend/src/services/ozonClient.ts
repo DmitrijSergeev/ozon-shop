@@ -84,3 +84,6 @@ export interface OzonOrderProduct {
 export interface OzonOrderResponse {
   result: OzonOrderItem[];
 }
+
+/** Схема работы магазина */
+export type OzonScheme = "fbs" | "fbo";
