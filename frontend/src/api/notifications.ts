@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch } from "./client";
 
 export type NotificationType =
   | "out_of_stock"

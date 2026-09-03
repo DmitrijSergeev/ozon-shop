@@ -1,3 +1,5 @@
+"use client";
+
 import type { OzonProduct } from "../api/ozonApi";
 
 interface ProductCardProps {

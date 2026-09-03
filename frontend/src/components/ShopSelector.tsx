@@ -1,4 +1,6 @@
-import { useShop } from "../hooks/useShop.js";
+"use client";
+
+import { useShop } from "../hooks/useShop";
 
 function ShopSelector() {
   const { shops, shopId, setShopId } = useShop();

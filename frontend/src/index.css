@@ -25,6 +25,121 @@ button {
 }
 
 /* =========================
+   APP LAYOUT + SIDEBAR
+========================= */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #1f2430;
+  color: #e6e8ee;
+
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  padding: 20px 20px 16px;
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+
+  color: #ffffff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  padding: 8px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  border-radius: 8px;
+
+  color: #c3c8d4;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  text-decoration: none;
+
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.sidebar-link-active {
+  background: #005bff;
+  color: #ffffff;
+}
+
+.sidebar-link-active:hover {
+  background: #005bff;
+  color: #ffffff;
+}
+
+.sidebar-icon {
+  width: 20px;
+
+  text-align: center;
+
+  font-size: 16px;
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 64px;
+  }
+
+  .sidebar-brand {
+    display: none;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .sidebar-link span:last-child {
+    display: none;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+}
+
+
+/* =========================
    SHARED: PAGE HEADER + SHOP SELECTOR
 ========================= */
 

@@ -1,10 +1,12 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.js";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../hooks/useAuth";
 
 function LoginPage() {
   const { login, register } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ function LoginPage() {
       } else {
         await register(email, password);
       }
-      navigate("/");
+      router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка");
     } finally {

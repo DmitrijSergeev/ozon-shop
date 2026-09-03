@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { getOzonCredentials } from "./shop.service.js";
-import { createOzonClient } from "./ozonClient.js";
+import { createOzonModule } from "../ozon/index.js";
 
 export interface PriceRow {
   id: string;
@@ -64,11 +64,11 @@ export async function updatePrices(
   updates: PriceUpdateItem[],
 ): Promise<PriceUpdateResult> {
   const credentials = await getOzonCredentials(shopId);
-  const client = createOzonClient(credentials);
+  const ozon = createOzonModule(credentials);
 
   const result: PriceUpdateResult = { updated: 0, failed: 0, errors: [] };
 
-  // Получаем товары по id, чтобы знать их ozonId (product_id) для Ozon API
+  // Получаем товары по id, чтобы знать их ozonId (product_id) и offer_id для Ozon API
   const products = await prisma.product.findMany({
     where: { shopId, id: { in: updates.map((u) => u.productId) } },
     select: { id: true, ozonId: true, offerId: true },
@@ -76,79 +76,64 @@ export async function updatePrices(
 
   const productById = new Map(products.map((p) => [p.id, p]));
 
-  // Ozon API принимает батчами до 1000 товаров
-  const BATCH_SIZE = 1000;
-  const batches: PriceUpdateItem[][] = [];
+  // Маппим доменные обновления в формат Ozon-сервиса
+  const ozonUpdates = updates
+    .map((u) => {
+      const product = productById.get(u.productId);
+      if (!product) return null;
 
-  for (let i = 0; i < updates.length; i += BATCH_SIZE) {
-    batches.push(updates.slice(i, i + BATCH_SIZE));
+      return {
+        offerId: product.offerId,
+        productId: Number(product.ozonId),
+        price: u.price,
+      };
+    })
+    .filter((u): u is NonNullable<typeof u> => u !== null);
+
+  if (ozonUpdates.length === 0) {
+    return result;
   }
 
-  for (const batch of batches) {
-    const prices = batch
-      .map((u) => {
-        const product = productById.get(u.productId);
-        if (!product) return null;
+  try {
+    // OzonPricesService сам разбивает на батчи до 1000 и возвращает task_id
+    const taskIds = await ozon.prices.updatePrices(ozonUpdates);
 
-        return {
-          auto_action_enabled: "UNKNOWN",
-          currency_code: "RUB",
-          offer_id: product.offerId,
-          old_price: "0",
-          price: String(u.price),
-          product_id: Number(product.ozonId),
-          min_price: "0",
-        };
-      })
-      .filter((p): p is NonNullable<typeof p> => p !== null);
+    if (taskIds.length > 0) {
+      result.updated += ozonUpdates.length;
 
-    if (prices.length === 0) continue;
+      // Обновляем локальную цену в БД
+      for (const u of ozonUpdates) {
+        const product = products.find((p) => p.offerId === u.offerId);
+        if (!product) continue;
 
-    try {
-      const response = await client.post("/v1/product/import/prices", {
-        prices,
-      });
-
-      const taskId = response.data?.result?.task_id;
-
-      if (taskId) {
-        // Успешно отправлено в Ozon
-        result.updated += prices.length;
-
-        // Обновляем локальную цену в БД
-        for (const p of prices) {
-          const product = products.find((prod) => prod.offerId === p.offer_id);
-          if (!product) continue;
-
-          await prisma.price.upsert({
-            where: { productId: product.id },
-            create: {
-              shopId,
-              productId: product.id,
-              price: Number(p.price),
-              currency: "RUB",
-            },
-            update: {
-              price: Number(p.price),
-              currency: "RUB",
-            },
-          });
-        }
-      } else {
-        result.failed += prices.length;
-        for (const p of prices) {
-          result.errors.push({
-            productId: p.offer_id,
-            message: "Ozon не вернул task_id",
-          });
-        }
+        await prisma.price.upsert({
+          where: { productId: product.id },
+          create: {
+            shopId,
+            productId: product.id,
+            price: u.price,
+            currency: "RUB",
+          },
+          update: {
+            price: u.price,
+            currency: "RUB",
+          },
+        });
       }
-    } catch (err: any) {
-      result.failed += prices.length;
-      const message = err?.response?.data?.message ?? err?.message ?? "Ошибка Ozon API";
-      for (const p of prices) {
-        result.errors.push({ productId: p.offer_id, message });
+    } else {
+      result.failed += ozonUpdates.length;
+      for (const u of ozonUpdates) {
+        result.errors.push({
+          productId: u.offerId,
+          message: "Ozon не вернул task_id",
+        });
       }
+    }
+  } catch (err: any) {
+    result.failed += ozonUpdates.length;
+    const message = err?.response?.data?.message ?? err?.message ?? "Ошибка Ozon API";
+    for (const u of ozonUpdates) {
+      result.errors.push({ productId: u.offerId, message });
     }
   }
 

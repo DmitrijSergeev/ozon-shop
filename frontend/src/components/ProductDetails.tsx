@@ -1,13 +1,14 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useRouter, useParams } from "next/navigation";
 
 import {
   getProductDetails,
   type ProductDetailsData,
   type StockStatus,
 } from "../api/productDetails";
-import { useShop } from "../hooks/useShop.js";
-import "./productDetails.css";
+import { useShop } from "../hooks/useShop";
 
 function formatMoney(value: number | null): string {
   if (value === null) return "—";
@@ -27,8 +28,11 @@ const STOCK_STATUS_LABELS: Record<StockStatus, string> = {
 };
 
 function ProductDetails() {
-  const { productId } = useParams();
-  const navigate = useNavigate();
+  const params = useParams();
+  const productId = Array.isArray(params.productId)
+    ? params.productId[0]
+    : params.productId;
+  const router = useRouter();
 
   const { shopId } = useShop();
   const [product, setProduct] = useState<ProductDetailsData | null>(null);
@@ -70,7 +74,7 @@ function ProductDetails() {
   if (error) {
     return (
       <main className="product-details">
-        <button type="button" onClick={() => navigate(-1)}>
+        <button type="button" onClick={() => router.back()}>
           ← Назад
         </button>
         <p className="auth-error">{error}</p>
@@ -81,7 +85,7 @@ function ProductDetails() {
   if (!product) {
     return (
       <main className="product-details">
-        <button type="button" onClick={() => navigate(-1)}>
+        <button type="button" onClick={() => router.back()}>
           ← Назад
         </button>
         <p>Товар не найден</p>
@@ -96,7 +100,7 @@ function ProductDetails() {
 
   return (
     <main className="product-details">
-      <button type="button" onClick={() => navigate("/products")}>
+      <button type="button" onClick={() => router.push("/products")}>
         ← Назад к товарам
       </button>
 
@@ -215,3 +219,5 @@ function ProductDetails() {
 }
 
 export default ProductDetails;
+
+

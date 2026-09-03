@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { encryptSecret, decryptSecret } from "../lib/crypto.js";
-import { createOzonClient } from "./ozonClient.js";
+import { createOzonClient } from "../ozon/index.js";
 import { NotFoundError } from "../errors/NotFoundError.js";
 import { ForbiddenError } from "../errors/ForbiddenError.js";
 

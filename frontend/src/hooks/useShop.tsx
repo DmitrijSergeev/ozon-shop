@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   useContext,
@@ -5,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { listShops, type Shop } from "../api/shop.js";
+import { listShops, type Shop } from "../api/shop";
 
 const STORAGE_KEY = "ozon-shop:selectedShopId";
 
@@ -22,6 +24,7 @@ const ShopContext = createContext<ShopContextValue | null>(null);
 export function ShopProvider({ children }: { children: ReactNode }) {
   const [shops, setShops] = useState<Shop[]>([]);
   const [shopId, setShopIdState] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
     try {
       return localStorage.getItem(STORAGE_KEY) ?? "";
     } catch {
@@ -48,6 +51,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   function setShopId(id: string) {
     setShopIdState(id);
+    if (typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEY, id);
     } catch {

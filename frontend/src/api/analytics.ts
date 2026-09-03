@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch } from "./client";
 
 export type AnalyticsPeriod = "today" | "7d" | "30d" | "custom";
 

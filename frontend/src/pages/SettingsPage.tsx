@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import {
   listShops,
@@ -6,7 +8,7 @@ import {
   syncShop,
   getLastSync,
   type Shop,
-} from "../api/shop.js";
+} from "../api/shop";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Ожидает подключения",

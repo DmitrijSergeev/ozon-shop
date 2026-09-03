@@ -1,0 +1,99 @@
+{
+  "rules": [
+    {
+      "toolId": "run_terminal",
+      "pattern": "node -e \"const fs=require('fs');const p='backend/prisma/schema.prisma';let s=fs.readFileSync(p,'utf8');const old='model Order {/n  id          String   @id @default(cuid())/n  shopId      String/n  ozonOrderId String/n  status      String/n  amount      Decimal  @db.Decimal(12, 2)/n  createdAt   DateTime @default(now())/n  updatedAt   DateTime @updatedAt';const neu='model Order {/n  id            String   @id @default(cuid())/n  shopId        String/n  ozonOrderId   String/n  postingNumber String?/n  scheme        String   @default(/\"fbs/\")/n  status        String/n  amount        Decimal  @db.Decimal(12, 2)/n  createdAt     DateTime @default(now())/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "node backend/scripts/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "node -e \"const fs=require('fs');const s=fs.readFileSync('backend/prisma/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "*",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "cd ../**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "node scripts/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "cd .. && if (Test-Path node_modules/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "websearch",
+      "pattern": "*",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "if (Test-Path node_modules/next) { \"next EXISTS\" } else { \"next MISSING\" }; if (Test-Path node_modules/.bin/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "npx --yes --cache C:/Users/dmitr/AppData/Local/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "Remove-Item -Recurse -Force \"$env:LOCALAPPDATA/npm-cache/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "if (Test-Path node_modules/next) { \"root next EXISTS\" } else { \"root next MISSING\" }; if (Test-Path node_modules/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "if (Test-Path frontend/node_modules/next) { \"frontend next EXISTS\" } else { \"frontend next MISSING\" }; if (Test-Path frontend/node_modules/.bin/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "Remove-Item -Recurse -Force frontend/ozon-shop -ErrorAction SilentlyContinue; if (Test-Path frontend/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "node -e \"console.log('react', require('./node_modules/react/package.json').version); console.log('react-dom', require('./node_modules/react-dom/**",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "cd frontend && Get-ChildItem -Recurse -Path src -Include *.tsx,*.ts | Select-String -Pattern '/.js\"' | Select-Object -ExpandProperty Path -Unique",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "Get-ChildItem -Recurse -Path src -Include *.tsx,*.ts | Select-String -Pattern '/.js\"' | Select-Object -ExpandProperty Path -Unique",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "Get-ChildItem -Recurse -Path src -Include *.tsx | ForEach-Object { $c = Get-Content $_.FullName -Raw; $hasHook = $c -match 'useState|useEffect|useContext|useRef|useMemo|useCallback|useRouter|useParams|usePathname|useAuth|useShop'; $hasClient = $c -match '\"use client\"'; if ($hasHook -and -not $hasClient) { $_.FullName } }",
+      "action": "allow"
+    },
+    {
+      "toolId": "run_terminal",
+      "pattern": "Get-ChildItem -Recurse -Path src -Include *.tsx -File | ForEach-Object { $c = Get-Content $_.FullName -Raw; $hasClient = $c -match '\"use client\"'; $rel = $_.FullName.Replace('D:/My_experience/zmtr/ozon-shop/frontend/src/',''); \"{0} | client={1}\" -f $rel, $hasClient }",
+      "action": "allow"
+    }
+  ]
+}

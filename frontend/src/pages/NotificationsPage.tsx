@@ -1,10 +1,11 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import {
   getNotificationSettings,
   updateNotificationSettings,
   type NotificationSettingItem,
-} from "../api/notifications.js";
-import "./notifications.css";
+} from "../api/notifications";
 
 function NotificationsPage() {
   const [settings, setSettings] = useState<NotificationSettingItem[]>([]);

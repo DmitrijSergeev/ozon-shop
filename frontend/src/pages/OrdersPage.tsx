@@ -1,13 +1,14 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import {
   getOrders,
   getOrderStatuses,
   type OrderRow,
-} from "../api/orders.js";
-import { getProducts } from "../api/products.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
-import "./orders.css";
+} from "../api/orders";
+import { getProducts } from "../api/products";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("ru-RU", {

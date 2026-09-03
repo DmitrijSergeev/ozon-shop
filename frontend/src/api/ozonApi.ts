@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch } from "./client";
 
 export type SearchType = "offer_id" | "product_id" | "sku";
 

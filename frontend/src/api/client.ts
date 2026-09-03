@@ -1,14 +1,21 @@
 const TOKEN_KEY = "ozon_shop_token";
 
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
 export function getToken(): string | null {
+  if (!isBrowser()) return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
 export function setToken(token: string): void {
+  if (!isBrowser()) return;
   localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
+  if (!isBrowser()) return;
   localStorage.removeItem(TOKEN_KEY);
 }
 

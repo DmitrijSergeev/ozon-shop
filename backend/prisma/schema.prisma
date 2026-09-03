@@ -13,8 +13,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  shops                 Shop[]
-  notificationSettings  NotificationSetting[]
+  shops                Shop[]
+  notificationSettings NotificationSetting[]
+
+  @@map("users")
 }
 
 model Shop {
@@ -24,15 +26,20 @@ model Shop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connections OzonConnection[]
-  products    Product[]
-  stocks      Stock[]
-  prices      Price[]
-  orders      Order[]
-  syncJobs    SyncJob[]
-  orderItems  OrderItem[]
-  problems    Problem[]
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connections  OzonConnection[]
+  products     Product[]
+  stocks       Stock[]
+  prices       Price[]
+  orders       Order[]
+  syncJobs     SyncJob[]
+  orderItems   OrderItem[]
+  problems     Problem[]
+  stockHistory ProductStockHistory[]
+  priceHistory ProductPriceHistory[]
+  salesDaily   SalesDaily[]
+
+  @@map("shops")
 }
 
 model OzonConnection {
@@ -48,6 +55,7 @@ model OzonConnection {
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId])
+  @@map("ozon_connections")
 }
 
 model Product {
@@ -64,13 +72,17 @@ model Product {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  shop       Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  stocks     Stock[]
-  prices     Price[]
-  orderItems OrderItem[]
-  problems   Problem[]
+  shop         Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  stocks       Stock[]
+  prices       Price[]
+  orderItems   OrderItem[]
+  problems     Problem[]
+  stockHistory ProductStockHistory[]
+  priceHistory ProductPriceHistory[]
+  salesDaily   SalesDaily[]
 
   @@unique([shopId, ozonId])
+  @@map("products")
 }
 
 model Stock {
@@ -86,6 +98,7 @@ model Stock {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, source])
+  @@map("product_stocks")
 }
 
 model Price {
@@ -102,6 +115,7 @@ model Price {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId])
+  @@map("product_prices")
 }
 
 model Order {
@@ -119,6 +133,7 @@ model Order {
   orderItems OrderItem[]
 
   @@unique([shopId, ozonOrderId])
+  @@map("orders")
 }
 
 model OrderItem {
@@ -137,6 +152,7 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@index([createdAt])
+  @@map("order_items")
 }
 
 model SyncJob {
@@ -152,6 +168,7 @@ model SyncJob {
 
   @@index([shopId, type])
   @@index([startedAt])
+  @@map("sync_jobs")
 }
 
 model Problem {
@@ -167,8 +184,8 @@ model Problem {
 
   @@unique([shopId, productId, type])
   @@index([shopId])
+  @@map("problems")
 }
-
 
 model NotificationSetting {
   id        String   @id @default(cuid())
@@ -182,4 +199,61 @@ model NotificationSetting {
 
   @@unique([userId, type])
   @@index([userId])
+  @@map("notifications")
+}
+
+// =========================
+// ИСТОРИЯ (снапшоты)
+// =========================
+
+model ProductStockHistory {
+  id        String   @id @default(cuid())
+  shopId    String
+  productId String
+  stock     Int
+  createdAt DateTime @default(now())
+
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([shopId, createdAt])
+  @@map("product_stock_history")
+}
+
+model ProductPriceHistory {
+  id        String   @id @default(cuid())
+  shopId    String
+  productId String
+  price     Decimal  @db.Decimal(12, 2)
+  oldPrice  Decimal? @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([shopId, createdAt])
+  @@map("product_price_history")
+}
+
+// =========================
+// ЕЖЕДНЕВНАЯ АГРЕГАЦИЯ ПРОДАЖ
+// =========================
+
+model SalesDaily {
+  id        String   @id @default(cuid())
+  shopId    String
+  productId String
+  date      DateTime @db.Date
+  quantity  Int      @default(0)
+  revenue   Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, productId, date])
+  @@index([shopId, date])
+  @@map("sales_daily")
 }

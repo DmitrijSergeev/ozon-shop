@@ -1,6 +1,8 @@
+"use client";
+
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { getToken, setToken, clearToken } from "../api/client.js";
-import { login as apiLogin, register as apiRegister, type AuthUser } from "../api/auth.js";
+import { getToken, setToken, clearToken } from "../api/client";
+import { login as apiLogin, register as apiRegister, type AuthUser } from "../api/auth";
 
 interface AuthContextValue {
   user: AuthUser | null;

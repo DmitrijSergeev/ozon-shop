@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 import {
   getProducts,
@@ -8,8 +10,8 @@ import {
   type SortOrder,
   type ProductsFilters,
 } from "../api/products";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "./ShopSelector.js";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "./ShopSelector";
 
 const DEFAULT_FILTERS: ProductsFilters = {
   inStock: false,
@@ -55,7 +57,7 @@ function formatMoney(value: number | null): string {
 }
 
 function ProductList() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const { shopId } = useShop();
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -203,7 +205,7 @@ function ProductList() {
                   <tr
                     key={product.id}
                     className="product-row"
-                    onClick={() => navigate(`/products/${product.id}`)}
+                    onClick={() => router.push(`/products/${product.id}`)}
                   >
                     <td className="product-name-cell">
                       <div className="product-name">

@@ -1,40 +1,15 @@
 import { prisma } from "../lib/prisma.js";
 import { getOzonCredentials } from "./shop.service.js";
-import {
-  createOzonClient,
-  type OzonListProduct,
-  type OzonStockItem,
-  type OzonPriceItem,
-  type OzonOrderItem,
-  type OzonScheme,
-} from "./ozonClient.js";
-
-const PAGE_LIMIT = 1000;
-const MAX_PAGES = 100;
+import { createOzonModule } from "../ozon/index.js";
+import type {
+  OzonListProduct,
+  OzonStockItem,
+  OzonPriceItem,
+  OzonOrderItem,
+  OzonScheme,
+} from "../ozon/index.js";
 
 export type SyncType = "frequent" | "infrequent" | "full";
-
-async function fetchAllPages<T>(
-  client: ReturnType<typeof createOzonClient>,
-  url: string,
-  body: Record<string, unknown>,
-  extract: (data: any) => { items: T[]; lastId: string },
-): Promise<T[]> {
-  const collected: T[] = [];
-  let lastId = "";
-
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const response = await client.post(url, { ...body, last_id: lastId, limit: PAGE_LIMIT });
-    const { items, lastId: nextLastId } = extract(response.data);
-
-    collected.push(...items);
-
-    if (!nextLastId) break;
-    lastId = nextLastId;
-  }
-
-  return collected;
-}
 
 /**
  * Синхронизация магазина.
@@ -45,7 +20,7 @@ async function fetchAllPages<T>(
  */
 export async function syncShop(shopId: string, type: SyncType = "full") {
   const credentials = await getOzonCredentials(shopId);
-  const client = createOzonClient(credentials);
+  const ozon = createOzonModule(credentials);
 
   const syncJob = await prisma.syncJob.create({
     data: { shopId, type, status: "running" },
@@ -54,43 +29,19 @@ export async function syncShop(shopId: string, type: SyncType = "full") {
   try {
     if (type === "frequent" || type === "full") {
       // Частые данные: остатки + заказы
-      const stocks = await fetchAllPages<OzonStockItem>(
-        client,
-        "/v4/product/info/stocks",
-        { filter: { visibility: "ALL" } },
-        (data) => ({
-          items: data?.result?.items ?? [],
-          lastId: data?.result?.last_id ?? "",
-        }),
-      );
+      const stocks = await ozon.stocks.listAll();
       await upsertStocks(shopId, stocks);
 
-      const orderBatches = await fetchRecentOrders(client);
+      const orderBatches = await ozon.orders.listRecent(30);
       await upsertOrders(shopId, orderBatches);
     }
 
     if (type === "infrequent" || type === "full") {
       // Менее частые данные: товары + цены
-      const products = await fetchAllPages<OzonListProduct>(
-        client,
-        "/v3/product/list",
-        { filter: { visibility: "ALL" } },
-        (data) => ({
-          items: data?.result?.items ?? [],
-          lastId: data?.result?.last_id ?? "",
-        }),
-      );
+      const products = await ozon.products.listAll();
       await upsertProducts(shopId, products);
 
-      const prices = await fetchAllPages<OzonPriceItem>(
-        client,
-        "/v5/product/info/prices",
-        { filter: { visibility: "ALL" } },
-        (data) => ({
-          items: data?.result?.items ?? [],
-          lastId: data?.result?.last_id ?? "",
-        }),
-      );
+      const prices = await ozon.prices.listAll();
       await upsertPrices(shopId, prices);
     }
 
@@ -172,8 +123,12 @@ async function upsertStocks(shopId: string, stocks: OzonStockItem[]) {
 
     if (!product) continue;
 
+    // Суммарный остаток по всем складам (fbo + fbs)
+    let totalPresent = 0;
+
     for (const stock of s.stocks) {
       const source = stock.type === "fbo" ? "fbo" : "fbs";
+      totalPresent += stock.present;
 
       await prisma.stock.upsert({
         where: { productId_source: { productId: product.id, source } },
@@ -190,6 +145,15 @@ async function upsertStocks(shopId: string, stocks: OzonStockItem[]) {
         },
       });
     }
+
+    // Снапшот остатка в историю
+    await prisma.productStockHistory.create({
+      data: {
+        shopId,
+        productId: product.id,
+        stock: totalPresent,
+      },
+    });
   }
 }
 
@@ -222,41 +186,17 @@ async function upsertPrices(shopId: string, prices: OzonPriceItem[]) {
         currency: p.price.currency_code || "RUB",
       },
     });
-  }
-}
 
-async function fetchRecentOrders(
-  client: ReturnType<typeof createOzonClient>,
-): Promise<{ orders: OzonOrderItem[]; scheme: OzonScheme }[]> {
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  const results: { orders: OzonOrderItem[]; scheme: OzonScheme }[] = [];
-
-  // FBS-заказы
-  try {
-    const fbs = await client.post("/v3/posting/fbs/list", {
-      filter: { since, status: "" },
-      limit: 100,
-      with: { analytics_data: false, barcodes: false, financial_data: false },
+    // Снапшот цены в историю
+    await prisma.productPriceHistory.create({
+      data: {
+        shopId,
+        productId: product.id,
+        price,
+        oldPrice,
+      },
     });
-    results.push({ orders: fbs.data?.result ?? [], scheme: "fbs" });
-  } catch {
-    // FBS может быть недоступен — пропускаем
   }
-
-  // FBO-заказы
-  try {
-    const fbo = await client.post("/v2/posting/fbo/list", {
-      filter: { since, status: "" },
-      limit: 100,
-      with: { analytics_data: false, barcodes: false, financial_data: false },
-    });
-    results.push({ orders: fbo.data?.result ?? [], scheme: "fbo" });
-  } catch {
-    // FBO может быть недоступен — пропускаем
-  }
-
-  return results;
 }
 
 async function upsertOrders(

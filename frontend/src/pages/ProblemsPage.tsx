@@ -1,14 +1,15 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import {
   getProblems,
   resolveProblem,
   type ProblemItem,
   type ProblemsPage,
-} from "../api/problems.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
-import "./problems.css";
+} from "../api/problems";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 const SEVERITY_ICON: Record<string, string> = {
   critical: "🔴",
@@ -50,7 +51,7 @@ function ProblemCard({
 }
 
 function ProblemsPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { shopId } = useShop();
   const [data, setData] = useState<ProblemsPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +122,7 @@ function ProblemsPage() {
               key={`${item.productId}:${item.type}`}
               item={item}
               onResolve={() => handleResolve(item)}
-              onOpen={() => navigate(`/products/${item.productId}`)}
+              onOpen={() => router.push(`/products/${item.productId}`)}
             />
           ))}
         </section>
@@ -137,7 +138,7 @@ function ProblemsPage() {
               key={`${item.productId}:${item.type}`}
               item={item}
               onResolve={() => handleResolve(item)}
-              onOpen={() => navigate(`/products/${item.productId}`)}
+              onOpen={() => router.push(`/products/${item.productId}`)}
             />
           ))}
         </section>
@@ -153,7 +154,7 @@ function ProblemsPage() {
               key={`${item.productId}:${item.type}`}
               item={item}
               onResolve={() => handleResolve(item)}
-              onOpen={() => navigate(`/products/${item.productId}`)}
+              onOpen={() => router.push(`/products/${item.productId}`)}
             />
           ))}
         </section>

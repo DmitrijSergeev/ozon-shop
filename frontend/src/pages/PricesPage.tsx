@@ -1,12 +1,13 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   getPrices,
   updatePrices,
   type PriceRow,
-} from "../api/prices.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
-import "./prices.css";
+} from "../api/prices";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 function formatMoney(value: number | null): string {
   if (value === null) return "—";

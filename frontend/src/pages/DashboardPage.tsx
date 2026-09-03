@@ -1,13 +1,15 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import {
   getDashboard,
   getAttention,
   type DashboardMetrics,
   type AttentionItem,
-} from "../api/shop.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
+} from "../api/shop";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 const SEVERITY_LABELS: Record<string, string> = {
   red: "🔴",
@@ -26,7 +28,7 @@ function formatMoney(value: number): string {
 }
 
 function DashboardPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const { shops, shopId } = useShop();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -70,7 +72,7 @@ function DashboardPage() {
       <main className="dashboard-page">
         <h1>Dashboard</h1>
         <p>У вас пока нет магазинов.</p>
-        <button type="button" onClick={() => navigate("/settings")}>
+        <button type="button" onClick={() => router.push("/settings")}>
           Создать магазин
         </button>
       </main>
@@ -126,7 +128,7 @@ function DashboardPage() {
           <ul className="attention-list">
             {attention.map((item) => (
               <li key={item.id} className="attention-item">
-                <button type="button" onClick={() => navigate("/products")}>
+                <button type="button" onClick={() => router.push("/products")}>
                   <span className="attention-severity">{SEVERITY_LABELS[item.severity]}</span>
                   <span>
                     {item.count} {item.label}

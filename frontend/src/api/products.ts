@@ -1,4 +1,4 @@
-import { apiFetch } from "./client.js";
+import { apiFetch } from "./client";
 
 export type ProductStatus = "ok" | "out_of_stock" | "low_stock" | "archived";
 

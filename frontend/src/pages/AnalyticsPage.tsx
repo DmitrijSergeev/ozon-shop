@@ -1,13 +1,14 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import {
   getAnalytics,
   type AnalyticsPeriod,
   type AnalyticsResult,
   type DayPoint,
-} from "../api/analytics.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
-import "./analytics.css";
+} from "../api/analytics";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 const PERIOD_LABELS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "today", label: "Сегодня" },

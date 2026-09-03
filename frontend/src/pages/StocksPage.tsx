@@ -1,8 +1,9 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { getStocks, type StockRow, type StockStatus } from "../api/stocks.js";
-import { useShop } from "../hooks/useShop.js";
-import ShopSelector from "../components/ShopSelector.js";
-import "./stocks.css";
+import { getStocks, type StockRow, type StockStatus } from "../api/stocks";
+import { useShop } from "../hooks/useShop";
+import ShopSelector from "../components/ShopSelector";
 
 const STATUS_LABELS: Record<StockStatus, string> = {
   green: "🟢",
